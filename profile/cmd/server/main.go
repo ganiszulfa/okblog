@@ -4,11 +4,15 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 
+	"github.com/ganis/okblog/profile/pkg/database"
+	"github.com/ganis/okblog/profile/pkg/repository"
 	"github.com/ganis/okblog/profile/pkg/service"
 	httptransport "github.com/ganis/okblog/profile/pkg/transport/http"
 	"github.com/go-kit/log"
+	"github.com/go-kit/log/level"
 )
 
 func main() {
@@ -17,9 +21,20 @@ func main() {
 	logger = log.NewLogfmtLogger(os.Stderr)
 	logger = log.With(logger, "ts", log.DefaultTimestampUTC, "caller", log.DefaultCaller)
 
-	// Create service with logging middleware
+	dbConfig := getDbConfig(logger)
+	db, err := database.NewPostgresDB(dbConfig, logger)
+	if err != nil {
+		level.Error(logger).Log("msg", "Failed to connect to database", "err", err)
+		os.Exit(1)
+	}
+	defer db.Close()
+
+	// Initialize repository
+	repo := repository.NewPostgresRepository(db, logger)
+
+	// Create service with repository and logging middleware
 	var svc service.Service
-	svc = service.NewService()
+	svc = service.NewService(repo, logger)
 	svc = service.LoggingMiddleware(logger)(svc)
 
 	// Create HTTP server with the service
@@ -30,8 +45,9 @@ func main() {
 
 	// Start the server
 	go func() {
-		logger.Log("transport", "HTTP", "addr", ":8080", "msg", "Starting server")
-		errs <- http.ListenAndServe(":8080", server)
+		port := getEnv("PORT", "8080")
+		logger.Log("transport", "HTTP", "addr", ":"+port, "msg", "Starting server")
+		errs <- http.ListenAndServe(":"+port, server)
 	}()
 
 	// Listen for an interrupt signal
@@ -44,4 +60,33 @@ func main() {
 	}()
 
 	logger.Log("exit", <-errs)
+}
+
+func getDbConfig(logger log.Logger) database.Config {
+	dbPortStr := getEnv("DB_PORT", "5432")
+	dbPort, err := strconv.Atoi(dbPortStr)
+	if err != nil {
+		level.Error(logger).Log("msg", "Invalid DB_PORT", "value", dbPortStr, "err", err)
+		dbPort = 5432 // Default to 5432 if invalid
+	}
+
+	// Database configuration
+	dbConfig := database.Config{
+		Host:     getEnv("DB_HOST", "localhost"),
+		Port:     dbPort,
+		User:     getEnv("DB_USER", "postgres"),
+		Password: getEnv("DB_PASSWORD", "postgres"),
+		DBName:   getEnv("DB_NAME", "profile"),
+		SSLMode:  getEnv("DB_SSLMODE", "disable"),
+	}
+	return dbConfig
+}
+
+// getEnv gets an environment variable or returns a default value
+func getEnv(key, defaultValue string) string {
+	value := os.Getenv(key)
+	if value == "" {
+		return defaultValue
+	}
+	return value
 }

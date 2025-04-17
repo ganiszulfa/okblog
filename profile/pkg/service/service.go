@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/ganis/okblog/profile/pkg/model"
+	"github.com/ganis/okblog/profile/pkg/repository"
+	"github.com/go-kit/log"
 	"github.com/google/uuid"
 )
 
@@ -24,14 +26,15 @@ type Service interface {
 
 // profileService implements the Service interface
 type profileService struct {
-	// In a real implementation, this would have a repository/database client
-	profiles map[string]*model.Profile
+	repo   repository.Repository
+	logger log.Logger
 }
 
 // NewService creates a new instance of the profile service
-func NewService() Service {
+func NewService(repo repository.Repository, logger log.Logger) Service {
 	return &profileService{
-		profiles: make(map[string]*model.Profile),
+		repo:   repo,
+		logger: logger,
 	}
 }
 
@@ -41,7 +44,7 @@ func (s *profileService) CreateProfile(ctx context.Context, req model.CreateProf
 	}
 
 	now := time.Now()
-	profile := &model.Profile{
+	profile := model.Profile{
 		ID:        uuid.New().String(),
 		Username:  req.Username,
 		Email:     req.Email,
@@ -52,24 +55,37 @@ func (s *profileService) CreateProfile(ctx context.Context, req model.CreateProf
 		UpdatedAt: now,
 	}
 
-	s.profiles[profile.ID] = profile
-	return profile, nil
+	// Save to the repository
+	err := s.repo.CreateProfile(ctx, profile)
+	if err != nil {
+		return nil, err
+	}
+
+	return &profile, nil
 }
 
 func (s *profileService) GetProfile(ctx context.Context, id string) (*model.Profile, error) {
-	profile, exists := s.profiles[id]
-	if !exists {
-		return nil, ErrProfileNotFound
+	profile, err := s.repo.GetProfile(ctx, id)
+	if err != nil {
+		if err.Error() == "profile not found" {
+			return nil, ErrProfileNotFound
+		}
+		return nil, err
 	}
 	return profile, nil
 }
 
 func (s *profileService) UpdateProfile(ctx context.Context, id string, req model.UpdateProfileRequest) (*model.Profile, error) {
-	profile, exists := s.profiles[id]
-	if !exists {
-		return nil, ErrProfileNotFound
+	// First fetch the profile
+	profile, err := s.repo.GetProfile(ctx, id)
+	if err != nil {
+		if err.Error() == "profile not found" {
+			return nil, ErrProfileNotFound
+		}
+		return nil, err
 	}
 
+	// Update the profile with new values
 	if req.FirstName != "" {
 		profile.FirstName = req.FirstName
 	}
@@ -81,15 +97,23 @@ func (s *profileService) UpdateProfile(ctx context.Context, id string, req model
 	}
 
 	profile.UpdatedAt = time.Now()
-	s.profiles[id] = profile
+
+	// Save the updated profile
+	err = s.repo.UpdateProfile(ctx, *profile)
+	if err != nil {
+		return nil, err
+	}
+
 	return profile, nil
 }
 
 func (s *profileService) DeleteProfile(ctx context.Context, id string) error {
-	if _, exists := s.profiles[id]; !exists {
-		return ErrProfileNotFound
+	err := s.repo.DeleteProfile(ctx, id)
+	if err != nil {
+		if err.Error() == "profile not found" {
+			return ErrProfileNotFound
+		}
+		return err
 	}
-
-	delete(s.profiles, id)
 	return nil
 }
