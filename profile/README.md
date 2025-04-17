@@ -126,4 +126,33 @@ The server will start on the configured port (default: 8080).
 - github.com/go-kit/log - Structured logging
 - github.com/gorilla/mux - HTTP router
 - github.com/google/uuid - UUID generation
-- github.com/lib/pq - PostgreSQL driver 
+- github.com/lib/pq - PostgreSQL driver
+
+## Testing
+
+The profile service includes comprehensive unit and integration tests.
+
+### Running Tests
+
+```bash
+# Run all tests
+go test ./...
+
+# Run tests with coverage
+go test ./... -cover
+
+# Generate coverage report
+go test ./... -coverprofile=coverage.out
+go tool cover -html=coverage.out
+```
+
+### Test Structure
+
+- **Service Tests**: Test the business logic in isolation with mocked repositories
+- **Repository Tests**: Test the database interactions using sqlmock
+- **HTTP Endpoint Tests**: Test the HTTP endpoints with mocked services
+
+### Test Dependencies
+
+- github.com/stretchr/testify - Testing toolkit with assertions and mocks
+- github.com/DATA-DOG/go-sqlmock - SQL mock driver for database tests 
