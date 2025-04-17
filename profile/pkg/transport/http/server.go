@@ -41,7 +41,7 @@ func (s *Server) routes() {
 			return
 		}
 
-		response, err := endpoints.CreateProfile.ServeHTTP(context.Background(), req)
+		response, err := endpoints.CreateProfile(context.Background(), req)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -56,7 +56,7 @@ func (s *Server) routes() {
 
 		switch r.Method {
 		case http.MethodGet:
-			response, err := endpoints.GetProfile.ServeHTTP(context.Background(), id)
+			response, err := endpoints.GetProfile(context.Background(), id)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
@@ -69,7 +69,7 @@ func (s *Server) routes() {
 				http.Error(w, err.Error(), http.StatusBadRequest)
 				return
 			}
-			response, err := endpoints.UpdateProfile.ServeHTTP(context.Background(), req)
+			response, err := endpoints.UpdateProfile(context.Background(), req)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
@@ -77,7 +77,7 @@ func (s *Server) routes() {
 			EncodeResponse(context.Background(), w, response)
 
 		case http.MethodDelete:
-			err := endpoints.DeleteProfile.ServeHTTP(context.Background(), id)
+			_, err := endpoints.DeleteProfile(context.Background(), id)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
