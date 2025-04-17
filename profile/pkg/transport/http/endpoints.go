@@ -4,10 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"time"
 
 	"github.com/ganis/okblog/profile/pkg/model"
 	"github.com/ganis/okblog/profile/pkg/service"
 	"github.com/go-kit/kit/endpoint"
+	"github.com/go-kit/log"
 )
 
 type Endpoints struct {
@@ -17,12 +19,30 @@ type Endpoints struct {
 	DeleteProfile endpoint.Endpoint
 }
 
-func MakeEndpoints(svc service.Service) Endpoints {
+// EndpointLoggingMiddleware returns an endpoint middleware that logs endpoint performance
+func EndpointLoggingMiddleware(logger log.Logger) endpoint.Middleware {
+	return func(next endpoint.Endpoint) endpoint.Endpoint {
+		return func(ctx context.Context, request interface{}) (response interface{}, err error) {
+			defer func(begin time.Time) {
+				logger.Log(
+					"endpoint_time", time.Since(begin),
+					"err", err,
+				)
+			}(time.Now())
+			return next(ctx, request)
+		}
+	}
+}
+
+func MakeEndpoints(svc service.Service, logger log.Logger) Endpoints {
+	// Create a middleware for all endpoints
+	loggingMiddleware := EndpointLoggingMiddleware(logger)
+
 	return Endpoints{
-		CreateProfile: makeCreateProfileEndpoint(svc),
-		GetProfile:    makeGetProfileEndpoint(svc),
-		UpdateProfile: makeUpdateProfileEndpoint(svc),
-		DeleteProfile: makeDeleteProfileEndpoint(svc),
+		CreateProfile: loggingMiddleware(makeCreateProfileEndpoint(svc)),
+		GetProfile:    loggingMiddleware(makeGetProfileEndpoint(svc)),
+		UpdateProfile: loggingMiddleware(makeUpdateProfileEndpoint(svc)),
+		DeleteProfile: loggingMiddleware(makeDeleteProfileEndpoint(svc)),
 	}
 }
 

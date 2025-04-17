@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -9,18 +8,29 @@ import (
 
 	"github.com/ganis/okblog/profile/pkg/service"
 	httptransport "github.com/ganis/okblog/profile/pkg/transport/http"
+	"github.com/go-kit/log"
 )
 
 func main() {
-	svc := service.NewService()
-	server := httptransport.NewServer(svc)
+	// Create a logger
+	var logger log.Logger
+	logger = log.NewLogfmtLogger(os.Stderr)
+	logger = log.With(logger, "ts", log.DefaultTimestampUTC, "caller", log.DefaultCaller)
+
+	// Create service with logging middleware
+	var svc service.Service
+	svc = service.NewService()
+	svc = service.LoggingMiddleware(logger)(svc)
+
+	// Create HTTP server with the service
+	server := httptransport.NewServer(svc, logger)
 
 	// Create a channel to listen for errors coming from the listener.
 	errs := make(chan error, 2)
 
 	// Start the server
 	go func() {
-		log.Printf("Starting server on :8080")
+		logger.Log("transport", "HTTP", "addr", ":8080", "msg", "Starting server")
 		errs <- http.ListenAndServe(":8080", server)
 	}()
 
@@ -29,8 +39,9 @@ func main() {
 		c := make(chan os.Signal, 1)
 		signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
 		<-c
+		logger.Log("signal", "interrupt", "msg", "Shutting down")
 		errs <- nil
 	}()
 
-	log.Printf("exit", <-errs)
+	logger.Log("exit", <-errs)
 }

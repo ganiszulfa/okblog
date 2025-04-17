@@ -5,29 +5,34 @@ import (
 	"net/http"
 
 	"github.com/ganis/okblog/profile/pkg/service"
+	"github.com/go-kit/log"
 	"github.com/gorilla/mux"
 )
 
 type Server struct {
 	svc    service.Service
 	router *mux.Router
+	logger log.Logger
 }
 
-func NewServer(svc service.Service) *Server {
+func NewServer(svc service.Service, logger log.Logger) *Server {
 	s := &Server{
 		svc:    svc,
 		router: mux.NewRouter(),
+		logger: logger,
 	}
 	s.routes()
 	return s
 }
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	s.router.ServeHTTP(w, r)
+	// Apply logging middleware
+	handler := LoggingMiddleware(s.logger)(s.router)
+	handler.ServeHTTP(w, r)
 }
 
 func (s *Server) routes() {
-	endpoints := MakeEndpoints(s.svc)
+	endpoints := MakeEndpoints(s.svc, s.logger)
 
 	s.router.HandleFunc("/profiles", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
