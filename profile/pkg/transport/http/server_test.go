@@ -334,10 +334,6 @@ func TestValidateTokenEndpoint(t *testing.T) {
 	// Setup mock service
 	token := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIxMjM0NTY3ODkwIiwidXNlcm5hbWUiOiJ0ZXN0dXNlciJ9.4iN4aEJXDXY74C8uUe163X5PDF48FiRUUQJ-HbyX4WA"
 
-	validationReq := model.TokenValidationRequest{
-		Token: token,
-	}
-
 	// Create expected claims
 	now := time.Now()
 	expiresAt := now.Add(24 * time.Hour)
@@ -351,11 +347,13 @@ func TestValidateTokenEndpoint(t *testing.T) {
 
 	mockSvc.On("ValidateToken", mock.Anything, token).Return(expectedClaims, nil)
 
-	// Create request body
-	reqBody, _ := json.Marshal(validationReq)
+	// Create request with Authorization header
+	req, _ := http.NewRequest(http.MethodPost, testServer.URL+"/api/profiles/validate-token", nil)
+	req.Header.Set("Authorization", "Bearer "+token)
 
 	// Send request
-	resp, err := http.Post(testServer.URL+"/api/profiles/validate-token", "application/json", bytes.NewBuffer(reqBody))
+	client := &http.Client{}
+	resp, err := client.Do(req)
 	assert.NoError(t, err)
 	defer resp.Body.Close()
 
@@ -381,17 +379,15 @@ func TestValidateInvalidTokenEndpoint(t *testing.T) {
 	// Setup mock service
 	invalidToken := "invalid.token.format"
 
-	validationReq := model.TokenValidationRequest{
-		Token: invalidToken,
-	}
-
 	mockSvc.On("ValidateToken", mock.Anything, invalidToken).Return(nil, service.ErrInvalidToken)
 
-	// Create request body
-	reqBody, _ := json.Marshal(validationReq)
+	// Create request with Authorization header
+	req, _ := http.NewRequest(http.MethodPost, testServer.URL+"/api/profiles/validate-token", nil)
+	req.Header.Set("Authorization", "Bearer "+invalidToken)
 
 	// Send request
-	resp, err := http.Post(testServer.URL+"/api/profiles/validate-token", "application/json", bytes.NewBuffer(reqBody))
+	client := &http.Client{}
+	resp, err := client.Do(req)
 	assert.NoError(t, err)
 	defer resp.Body.Close()
 
@@ -406,4 +402,39 @@ func TestValidateInvalidTokenEndpoint(t *testing.T) {
 	assert.Nil(t, validationResponse.Claims)
 
 	mockSvc.AssertExpectations(t)
+}
+
+func TestMissingAuthorizationHeader(t *testing.T) {
+	_, _, testServer := setupMockServer()
+	defer testServer.Close()
+
+	// Create request without Authorization header
+	req, _ := http.NewRequest(http.MethodPost, testServer.URL+"/api/profiles/validate-token", nil)
+
+	// Send request
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	assert.NoError(t, err)
+	defer resp.Body.Close()
+
+	// Assertions
+	assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+}
+
+func TestInvalidAuthorizationFormat(t *testing.T) {
+	_, _, testServer := setupMockServer()
+	defer testServer.Close()
+
+	// Create request with invalid Authorization format
+	req, _ := http.NewRequest(http.MethodPost, testServer.URL+"/api/profiles/validate-token", nil)
+	req.Header.Set("Authorization", "InvalidFormat")
+
+	// Send request
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	assert.NoError(t, err)
+	defer resp.Body.Close()
+
+	// Assertions
+	assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
 }

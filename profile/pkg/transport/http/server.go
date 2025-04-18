@@ -3,6 +3,7 @@ package http
 import (
 	"context"
 	"net/http"
+	"strings"
 
 	"github.com/ganis/okblog/profile/pkg/service"
 	"github.com/go-kit/log"
@@ -92,6 +93,11 @@ func (s *Server) routes() {
 
 		req, err := DecodeValidateTokenRequest(context.Background(), r)
 		if err != nil {
+			// Handle Authorization header errors with 401 Unauthorized
+			if strings.Contains(err.Error(), "Authorization header") || strings.Contains(err.Error(), "token") {
+				http.Error(w, err.Error(), http.StatusUnauthorized)
+				return
+			}
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}

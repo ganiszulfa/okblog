@@ -3,7 +3,9 @@ package http
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/ganis/okblog/profile/pkg/model"
@@ -139,11 +141,23 @@ func DecodeLoginRequest(_ context.Context, r *http.Request) (interface{}, error)
 }
 
 func DecodeValidateTokenRequest(_ context.Context, r *http.Request) (interface{}, error) {
-	var req model.TokenValidationRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, err
+	authHeader := r.Header.Get("Authorization")
+	if authHeader == "" {
+		return nil, errors.New("missing Authorization header")
 	}
-	return req, nil
+
+	// Check if the header has the Bearer prefix
+	tokenParts := strings.Split(authHeader, " ")
+	if len(tokenParts) != 2 || strings.ToLower(tokenParts[0]) != "bearer" {
+		return nil, errors.New("invalid Authorization header format, expected 'Bearer token'")
+	}
+
+	token := tokenParts[1]
+	if token == "" {
+		return nil, errors.New("empty token in Authorization header")
+	}
+
+	return model.TokenValidationRequest{Token: token}, nil
 }
 
 func DecodeGetProfileRequest(_ context.Context, r *http.Request) (interface{}, error) {
