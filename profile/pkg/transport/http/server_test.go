@@ -22,7 +22,15 @@ type MockService struct {
 	mock.Mock
 }
 
-func (m *MockService) CreateProfile(ctx context.Context, req model.CreateProfileRequest) (*model.Profile, error) {
+func (m *MockService) RegisterProfile(ctx context.Context, req model.RegisterProfileRequest) (*model.Profile, error) {
+	args := m.Called(ctx, req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*model.Profile), args.Error(1)
+}
+
+func (m *MockService) Login(ctx context.Context, req model.LoginRequest) (*model.Profile, error) {
 	args := m.Called(ctx, req)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -62,14 +70,15 @@ func setupMockServer() (*MockService, *Server, *httptest.Server) {
 	return mockSvc, server, testServer
 }
 
-func TestCreateProfileEndpoint(t *testing.T) {
+func TestRegisterProfileEndpoint(t *testing.T) {
 	mockSvc, _, testServer := setupMockServer()
 	defer testServer.Close()
 
 	// Setup mock service
-	profileReq := model.CreateProfileRequest{
+	profileReq := model.RegisterProfileRequest{
 		Username:  "testuser",
 		Email:     "test@example.com",
+		Password:  "password123",
 		FirstName: "Test",
 		LastName:  "User",
 		Bio:       "This is a test user",
@@ -80,6 +89,7 @@ func TestCreateProfileEndpoint(t *testing.T) {
 		ID:        uuid.New().String(),
 		Username:  profileReq.Username,
 		Email:     profileReq.Email,
+		Password:  "", // Password should not be returned in response
 		FirstName: profileReq.FirstName,
 		LastName:  profileReq.LastName,
 		Bio:       profileReq.Bio,
@@ -87,13 +97,13 @@ func TestCreateProfileEndpoint(t *testing.T) {
 		UpdatedAt: now,
 	}
 
-	mockSvc.On("CreateProfile", mock.Anything, profileReq).Return(expectedProfile, nil)
+	mockSvc.On("RegisterProfile", mock.Anything, profileReq).Return(expectedProfile, nil)
 
 	// Create request body
 	reqBody, _ := json.Marshal(profileReq)
 
 	// Send request
-	resp, err := http.Post(testServer.URL+"/api/profiles", "application/json", bytes.NewBuffer(reqBody))
+	resp, err := http.Post(testServer.URL+"/api/profiles/register", "application/json", bytes.NewBuffer(reqBody))
 	assert.NoError(t, err)
 	defer resp.Body.Close()
 
@@ -107,6 +117,54 @@ func TestCreateProfileEndpoint(t *testing.T) {
 	assert.Equal(t, expectedProfile.ID, responseProfile.ID)
 	assert.Equal(t, expectedProfile.Username, responseProfile.Username)
 	assert.Equal(t, expectedProfile.Email, responseProfile.Email)
+	assert.Empty(t, responseProfile.Password) // Password should not be in response
+
+	mockSvc.AssertExpectations(t)
+}
+
+func TestLoginEndpoint(t *testing.T) {
+	mockSvc, _, testServer := setupMockServer()
+	defer testServer.Close()
+
+	// Setup mock service
+	loginReq := model.LoginRequest{
+		Username: "testuser",
+		Password: "password123",
+	}
+
+	expectedProfile := &model.Profile{
+		ID:        uuid.New().String(),
+		Username:  loginReq.Username,
+		Email:     "test@example.com",
+		Password:  "", // Password should be empty in response
+		FirstName: "Test",
+		LastName:  "User",
+		Bio:       "This is a test user",
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+
+	mockSvc.On("Login", mock.Anything, loginReq).Return(expectedProfile, nil)
+
+	// Create request body
+	reqBody, _ := json.Marshal(loginReq)
+
+	// Send request
+	resp, err := http.Post(testServer.URL+"/api/profiles/login", "application/json", bytes.NewBuffer(reqBody))
+	assert.NoError(t, err)
+	defer resp.Body.Close()
+
+	// Assertions
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+	var responseProfile model.Profile
+	err = json.NewDecoder(resp.Body).Decode(&responseProfile)
+	assert.NoError(t, err)
+
+	assert.Equal(t, expectedProfile.ID, responseProfile.ID)
+	assert.Equal(t, expectedProfile.Username, responseProfile.Username)
+	assert.Equal(t, expectedProfile.Email, responseProfile.Email)
+	assert.Empty(t, responseProfile.Password) // Password should not be in response
 
 	mockSvc.AssertExpectations(t)
 }

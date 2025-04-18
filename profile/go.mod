@@ -10,6 +10,7 @@ require (
 	github.com/gorilla/mux v1.8.1
 	github.com/lib/pq v1.10.9
 	github.com/stretchr/testify v1.10.0
+	golang.org/x/crypto v0.0.0-20220315160706-3147a52a75dd
 )
 
 require (

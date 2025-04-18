@@ -9,16 +9,20 @@ import (
 	"github.com/ganis/okblog/profile/pkg/repository"
 	"github.com/go-kit/log"
 	"github.com/google/uuid"
+	"golang.org/x/crypto/bcrypt"
 )
 
 var (
-	ErrProfileNotFound = errors.New("profile not found")
-	ErrInvalidInput    = errors.New("invalid input")
+	ErrProfileNotFound    = errors.New("profile not found")
+	ErrInvalidInput       = errors.New("invalid input")
+	ErrInvalidCredentials = errors.New("invalid credentials")
+	ErrHashingFailed      = errors.New("password hashing failed")
 )
 
 // Service defines the interface for profile operations
 type Service interface {
-	CreateProfile(ctx context.Context, req model.CreateProfileRequest) (*model.Profile, error)
+	RegisterProfile(ctx context.Context, req model.RegisterProfileRequest) (*model.Profile, error)
+	Login(ctx context.Context, req model.LoginRequest) (*model.Profile, error)
 	GetProfile(ctx context.Context, id string) (*model.Profile, error)
 	UpdateProfile(ctx context.Context, id string, req model.UpdateProfileRequest) (*model.Profile, error)
 	DeleteProfile(ctx context.Context, id string) error
@@ -38,9 +42,16 @@ func NewService(repo repository.Repository, logger log.Logger) Service {
 	}
 }
 
-func (s *profileService) CreateProfile(ctx context.Context, req model.CreateProfileRequest) (*model.Profile, error) {
-	if req.Username == "" || req.Email == "" {
+func (s *profileService) RegisterProfile(ctx context.Context, req model.RegisterProfileRequest) (*model.Profile, error) {
+	if req.Username == "" || req.Email == "" || req.Password == "" {
 		return nil, ErrInvalidInput
+	}
+
+	// Hash the password with bcrypt
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	if err != nil {
+		s.logger.Log("err", err, "msg", "Failed to hash password")
+		return nil, ErrHashingFailed
 	}
 
 	now := time.Now()
@@ -48,6 +59,7 @@ func (s *profileService) CreateProfile(ctx context.Context, req model.CreateProf
 		ID:        uuid.New().String(),
 		Username:  req.Username,
 		Email:     req.Email,
+		Password:  string(hashedPassword), // Store the hashed password
 		FirstName: req.FirstName,
 		LastName:  req.LastName,
 		Bio:       req.Bio,
@@ -56,12 +68,42 @@ func (s *profileService) CreateProfile(ctx context.Context, req model.CreateProf
 	}
 
 	// Save to the repository
-	err := s.repo.CreateProfile(ctx, profile)
+	err = s.repo.CreateProfile(ctx, profile)
 	if err != nil {
 		return nil, err
 	}
 
+	// Don't return the password in the response
+	profile.Password = ""
+
 	return &profile, nil
+}
+
+func (s *profileService) Login(ctx context.Context, req model.LoginRequest) (*model.Profile, error) {
+	if req.Username == "" || req.Password == "" {
+		return nil, ErrInvalidInput
+	}
+
+	// Get profile by username
+	profile, err := s.repo.GetProfileByUsername(ctx, req.Username)
+	if err != nil {
+		if err.Error() == "profile not found" {
+			return nil, ErrInvalidCredentials
+		}
+		return nil, err
+	}
+
+	// Compare the provided password with the stored hash
+	err = bcrypt.CompareHashAndPassword([]byte(profile.Password), []byte(req.Password))
+	if err != nil {
+		s.logger.Log("err", err, "msg", "Password comparison failed")
+		return nil, ErrInvalidCredentials
+	}
+
+	// Don't return the password in the response
+	profile.Password = ""
+
+	return profile, nil
 }
 
 func (s *profileService) GetProfile(ctx context.Context, id string) (*model.Profile, error) {
@@ -72,6 +114,10 @@ func (s *profileService) GetProfile(ctx context.Context, id string) (*model.Prof
 		}
 		return nil, err
 	}
+
+	// Don't return the password in the response
+	profile.Password = ""
+
 	return profile, nil
 }
 
@@ -103,6 +149,9 @@ func (s *profileService) UpdateProfile(ctx context.Context, id string, req model
 	if err != nil {
 		return nil, err
 	}
+
+	// Don't return the password in the response
+	profile.Password = ""
 
 	return profile, nil
 }

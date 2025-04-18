@@ -15,6 +15,7 @@ import (
 type Repository interface {
 	CreateProfile(ctx context.Context, profile model.Profile) error
 	GetProfile(ctx context.Context, id string) (*model.Profile, error)
+	GetProfileByUsername(ctx context.Context, username string) (*model.Profile, error)
 	UpdateProfile(ctx context.Context, profile model.Profile) error
 	DeleteProfile(ctx context.Context, id string) error
 }
@@ -36,8 +37,8 @@ func NewPostgresRepository(db *sql.DB, logger log.Logger) Repository {
 // CreateProfile creates a new profile in the database
 func (r *PostgresRepository) CreateProfile(ctx context.Context, profile model.Profile) error {
 	query := `
-		INSERT INTO profiles (id, username, email, first_name, last_name, bio, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+		INSERT INTO profiles (id, username, email, password, first_name, last_name, bio, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 	`
 
 	_, err := r.db.ExecContext(
@@ -46,6 +47,7 @@ func (r *PostgresRepository) CreateProfile(ctx context.Context, profile model.Pr
 		profile.ID,
 		profile.Username,
 		profile.Email,
+		profile.Password,
 		profile.FirstName,
 		profile.LastName,
 		profile.Bio,
@@ -64,7 +66,7 @@ func (r *PostgresRepository) CreateProfile(ctx context.Context, profile model.Pr
 // GetProfile retrieves a profile from the database by ID
 func (r *PostgresRepository) GetProfile(ctx context.Context, id string) (*model.Profile, error) {
 	query := `
-		SELECT id, username, email, first_name, last_name, bio, created_at, updated_at
+		SELECT id, username, email, password, first_name, last_name, bio, created_at, updated_at
 		FROM profiles
 		WHERE id = $1
 	`
@@ -74,6 +76,7 @@ func (r *PostgresRepository) GetProfile(ctx context.Context, id string) (*model.
 		&profile.ID,
 		&profile.Username,
 		&profile.Email,
+		&profile.Password,
 		&profile.FirstName,
 		&profile.LastName,
 		&profile.Bio,
@@ -86,6 +89,38 @@ func (r *PostgresRepository) GetProfile(ctx context.Context, id string) (*model.
 			return nil, errors.New("profile not found")
 		}
 		level.Error(r.logger).Log("msg", "Failed to get profile", "err", err)
+		return nil, err
+	}
+
+	return &profile, nil
+}
+
+// GetProfileByUsername retrieves a profile from the database by username
+func (r *PostgresRepository) GetProfileByUsername(ctx context.Context, username string) (*model.Profile, error) {
+	query := `
+		SELECT id, username, email, password, first_name, last_name, bio, created_at, updated_at
+		FROM profiles
+		WHERE username = $1
+	`
+
+	var profile model.Profile
+	err := r.db.QueryRowContext(ctx, query, username).Scan(
+		&profile.ID,
+		&profile.Username,
+		&profile.Email,
+		&profile.Password,
+		&profile.FirstName,
+		&profile.LastName,
+		&profile.Bio,
+		&profile.CreatedAt,
+		&profile.UpdatedAt,
+	)
+
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, errors.New("profile not found")
+		}
+		level.Error(r.logger).Log("msg", "Failed to get profile by username", "err", err)
 		return nil, err
 	}
 

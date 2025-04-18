@@ -35,6 +35,7 @@ func TestCreateProfile(t *testing.T) {
 		ID:        uuid.New().String(),
 		Username:  "testuser",
 		Email:     "test@example.com",
+		Password:  "$2a$10$hPkIwyYJBsmvKnXN9LBrNeoWsGnY6MQiEjgZXQvtdnVtPKQwvzBSG", // Bcrypt hash example
 		FirstName: "Test",
 		LastName:  "User",
 		Bio:       "Test bio",
@@ -44,12 +45,13 @@ func TestCreateProfile(t *testing.T) {
 
 	// Set up expectations
 	mock.ExpectExec(regexp.QuoteMeta(`
-		INSERT INTO profiles (id, username, email, first_name, last_name, bio, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+		INSERT INTO profiles (id, username, email, password, first_name, last_name, bio, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 	`)).WithArgs(
 		profile.ID,
 		profile.Username,
 		profile.Email,
+		profile.Password,
 		profile.FirstName,
 		profile.LastName,
 		profile.Bio,
@@ -72,13 +74,14 @@ func TestGetProfile(t *testing.T) {
 	ctx := context.Background()
 	id := uuid.New().String()
 	now := time.Now()
+	hashedPassword := "$2a$10$hPkIwyYJBsmvKnXN9LBrNeoWsGnY6MQiEjgZXQvtdnVtPKQwvzBSG" // Bcrypt hash example
 
-	rows := sqlmock.NewRows([]string{"id", "username", "email", "first_name", "last_name", "bio", "created_at", "updated_at"}).
-		AddRow(id, "testuser", "test@example.com", "Test", "User", "Test bio", now, now)
+	rows := sqlmock.NewRows([]string{"id", "username", "email", "password", "first_name", "last_name", "bio", "created_at", "updated_at"}).
+		AddRow(id, "testuser", "test@example.com", hashedPassword, "Test", "User", "Test bio", now, now)
 
 	// Set up expectations
 	mock.ExpectQuery(regexp.QuoteMeta(`
-		SELECT id, username, email, first_name, last_name, bio, created_at, updated_at
+		SELECT id, username, email, password, first_name, last_name, bio, created_at, updated_at
 		FROM profiles
 		WHERE id = $1
 	`)).WithArgs(id).WillReturnRows(rows)
@@ -92,6 +95,7 @@ func TestGetProfile(t *testing.T) {
 	assert.Equal(t, id, profile.ID)
 	assert.Equal(t, "testuser", profile.Username)
 	assert.Equal(t, "test@example.com", profile.Email)
+	assert.Equal(t, hashedPassword, profile.Password) // Check password is retrieved correctly
 	assert.Equal(t, "Test", profile.FirstName)
 	assert.Equal(t, "User", profile.LastName)
 	assert.Equal(t, "Test bio", profile.Bio)
@@ -107,13 +111,73 @@ func TestGetProfile_NotFound(t *testing.T) {
 
 	// Set up expectations
 	mock.ExpectQuery(regexp.QuoteMeta(`
-		SELECT id, username, email, first_name, last_name, bio, created_at, updated_at
+		SELECT id, username, email, password, first_name, last_name, bio, created_at, updated_at
 		FROM profiles
 		WHERE id = $1
 	`)).WithArgs(id).WillReturnError(sql.ErrNoRows)
 
 	// Call the method
 	profile, err := repo.GetProfile(ctx, id)
+
+	// Assertions
+	assert.Error(t, err)
+	assert.Nil(t, profile)
+	assert.Equal(t, "profile not found", err.Error())
+	assert.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestGetProfileByUsername(t *testing.T) {
+	db, mock, repo := setupMockDB(t)
+	defer db.Close()
+
+	ctx := context.Background()
+	id := uuid.New().String()
+	username := "testuser"
+	now := time.Now()
+	hashedPassword := "$2a$10$hPkIwyYJBsmvKnXN9LBrNeoWsGnY6MQiEjgZXQvtdnVtPKQwvzBSG" // Bcrypt hash example
+
+	rows := sqlmock.NewRows([]string{"id", "username", "email", "password", "first_name", "last_name", "bio", "created_at", "updated_at"}).
+		AddRow(id, username, "test@example.com", hashedPassword, "Test", "User", "Test bio", now, now)
+
+	// Set up expectations
+	mock.ExpectQuery(regexp.QuoteMeta(`
+		SELECT id, username, email, password, first_name, last_name, bio, created_at, updated_at
+		FROM profiles
+		WHERE username = $1
+	`)).WithArgs(username).WillReturnRows(rows)
+
+	// Call the method
+	profile, err := repo.GetProfileByUsername(ctx, username)
+
+	// Assertions
+	assert.NoError(t, err)
+	assert.NotNil(t, profile)
+	assert.Equal(t, id, profile.ID)
+	assert.Equal(t, username, profile.Username)
+	assert.Equal(t, "test@example.com", profile.Email)
+	assert.Equal(t, hashedPassword, profile.Password) // Check password is retrieved correctly
+	assert.Equal(t, "Test", profile.FirstName)
+	assert.Equal(t, "User", profile.LastName)
+	assert.Equal(t, "Test bio", profile.Bio)
+	assert.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestGetProfileByUsername_NotFound(t *testing.T) {
+	db, mock, repo := setupMockDB(t)
+	defer db.Close()
+
+	ctx := context.Background()
+	username := "nonexistentuser"
+
+	// Set up expectations
+	mock.ExpectQuery(regexp.QuoteMeta(`
+		SELECT id, username, email, password, first_name, last_name, bio, created_at, updated_at
+		FROM profiles
+		WHERE username = $1
+	`)).WithArgs(username).WillReturnError(sql.ErrNoRows)
+
+	// Call the method
+	profile, err := repo.GetProfileByUsername(ctx, username)
 
 	// Assertions
 	assert.Error(t, err)

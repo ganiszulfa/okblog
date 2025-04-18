@@ -26,10 +26,10 @@ type loggingMiddleware struct {
 	logger log.Logger
 }
 
-func (mw *loggingMiddleware) CreateProfile(ctx context.Context, req model.CreateProfileRequest) (profile *model.Profile, err error) {
+func (mw *loggingMiddleware) RegisterProfile(ctx context.Context, req model.RegisterProfileRequest) (profile *model.Profile, err error) {
 	defer func(begin time.Time) {
 		mw.logger.Log(
-			"method", "CreateProfile",
+			"method", "RegisterProfile",
 			"username", req.Username,
 			"email", req.Email,
 			"took", time.Since(begin),
@@ -37,7 +37,20 @@ func (mw *loggingMiddleware) CreateProfile(ctx context.Context, req model.Create
 		)
 	}(time.Now())
 
-	return mw.next.CreateProfile(ctx, req)
+	return mw.next.RegisterProfile(ctx, req)
+}
+
+func (mw *loggingMiddleware) Login(ctx context.Context, req model.LoginRequest) (profile *model.Profile, err error) {
+	defer func(begin time.Time) {
+		mw.logger.Log(
+			"method", "Login",
+			"username", req.Username,
+			"took", time.Since(begin),
+			"err", err,
+		)
+	}(time.Now())
+
+	return mw.next.Login(ctx, req)
 }
 
 func (mw *loggingMiddleware) GetProfile(ctx context.Context, id string) (profile *model.Profile, err error) {

@@ -13,10 +13,11 @@ import (
 )
 
 type Endpoints struct {
-	CreateProfile endpoint.Endpoint
-	GetProfile    endpoint.Endpoint
-	UpdateProfile endpoint.Endpoint
-	DeleteProfile endpoint.Endpoint
+	RegisterProfile endpoint.Endpoint
+	Login           endpoint.Endpoint
+	GetProfile      endpoint.Endpoint
+	UpdateProfile   endpoint.Endpoint
+	DeleteProfile   endpoint.Endpoint
 }
 
 // EndpointLoggingMiddleware returns an endpoint middleware that logs endpoint performance
@@ -39,17 +40,29 @@ func MakeEndpoints(svc service.Service, logger log.Logger) Endpoints {
 	loggingMiddleware := EndpointLoggingMiddleware(logger)
 
 	return Endpoints{
-		CreateProfile: loggingMiddleware(makeCreateProfileEndpoint(svc)),
-		GetProfile:    loggingMiddleware(makeGetProfileEndpoint(svc)),
-		UpdateProfile: loggingMiddleware(makeUpdateProfileEndpoint(svc)),
-		DeleteProfile: loggingMiddleware(makeDeleteProfileEndpoint(svc)),
+		RegisterProfile: loggingMiddleware(makeRegisterProfileEndpoint(svc)),
+		Login:           loggingMiddleware(makeLoginEndpoint(svc)),
+		GetProfile:      loggingMiddleware(makeGetProfileEndpoint(svc)),
+		UpdateProfile:   loggingMiddleware(makeUpdateProfileEndpoint(svc)),
+		DeleteProfile:   loggingMiddleware(makeDeleteProfileEndpoint(svc)),
 	}
 }
 
-func makeCreateProfileEndpoint(svc service.Service) endpoint.Endpoint {
+func makeRegisterProfileEndpoint(svc service.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(model.CreateProfileRequest)
-		profile, err := svc.CreateProfile(ctx, req)
+		req := request.(model.RegisterProfileRequest)
+		profile, err := svc.RegisterProfile(ctx, req)
+		if err != nil {
+			return nil, err
+		}
+		return profile, nil
+	}
+}
+
+func makeLoginEndpoint(svc service.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(model.LoginRequest)
+		profile, err := svc.Login(ctx, req)
 		if err != nil {
 			return nil, err
 		}
@@ -93,8 +106,16 @@ func makeDeleteProfileEndpoint(svc service.Service) endpoint.Endpoint {
 	}
 }
 
-func DecodeCreateProfileRequest(_ context.Context, r *http.Request) (interface{}, error) {
-	var req model.CreateProfileRequest
+func DecodeRegisterProfileRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	var req model.RegisterProfileRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return nil, err
+	}
+	return req, nil
+}
+
+func DecodeLoginRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	var req model.LoginRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, err
 	}

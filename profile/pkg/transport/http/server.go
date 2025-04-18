@@ -34,20 +34,49 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func (s *Server) routes() {
 	endpoints := MakeEndpoints(s.svc, s.logger)
 
-	s.router.HandleFunc("/api/profiles", func(w http.ResponseWriter, r *http.Request) {
+	s.router.HandleFunc("/api/profiles/register", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 			return
 		}
 
-		req, err := DecodeCreateProfileRequest(context.Background(), r)
+		req, err := DecodeRegisterProfileRequest(context.Background(), r)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
-		response, err := endpoints.CreateProfile(context.Background(), req)
+		response, err := endpoints.RegisterProfile(context.Background(), req)
 		if err != nil {
+			if err == service.ErrInvalidInput {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		EncodeResponse(context.Background(), w, response)
+	}).Methods(http.MethodPost)
+
+	s.router.HandleFunc("/api/profiles/login", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+
+		req, err := DecodeLoginRequest(context.Background(), r)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		response, err := endpoints.Login(context.Background(), req)
+		if err != nil {
+			if err == service.ErrInvalidInput || err == service.ErrInvalidCredentials {
+				http.Error(w, err.Error(), http.StatusUnauthorized)
+				return
+			}
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -63,6 +92,10 @@ func (s *Server) routes() {
 		case http.MethodGet:
 			response, err := endpoints.GetProfile(context.Background(), id)
 			if err != nil {
+				if err == service.ErrProfileNotFound {
+					http.Error(w, err.Error(), http.StatusNotFound)
+					return
+				}
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
@@ -76,6 +109,10 @@ func (s *Server) routes() {
 			}
 			response, err := endpoints.UpdateProfile(context.Background(), req)
 			if err != nil {
+				if err == service.ErrProfileNotFound {
+					http.Error(w, err.Error(), http.StatusNotFound)
+					return
+				}
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
@@ -84,6 +121,10 @@ func (s *Server) routes() {
 		case http.MethodDelete:
 			_, err := endpoints.DeleteProfile(context.Background(), id)
 			if err != nil {
+				if err == service.ErrProfileNotFound {
+					http.Error(w, err.Error(), http.StatusNotFound)
+					return
+				}
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
