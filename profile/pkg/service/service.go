@@ -2,15 +2,15 @@ package service
 
 import (
 	"context"
+	"crypto/hmac"
+	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"time"
-
-	"crypto/hmac"
-	"crypto/sha256"
+	"os"
 	"strings"
+	"time"
 
 	"github.com/ganis/okblog/profile/pkg/model"
 	"github.com/ganis/okblog/profile/pkg/repository"
@@ -28,9 +28,18 @@ var (
 	ErrInvalidToken          = errors.New("invalid token")
 )
 
-// JWT signing key - in a real application, this should be stored securely
-// and loaded from an environment variable or secure secrets manager
-var jwtSigningKey = []byte("my_secret_key")
+// JWT signing key - loaded from environment variable or default value
+var jwtSigningKey = getJWTSigningKey()
+
+// getJWTSigningKey loads the JWT signing key from environment variable or uses default
+func getJWTSigningKey() []byte {
+	key := os.Getenv("JWT_SIGNING_KEY")
+	if key == "" {
+		// Default value if environment variable is not set
+		return []byte("my_secret_key")
+	}
+	return []byte(key)
+}
 
 // JWT token expiration time
 const jwtExpirationTime = 24 * time.Hour
