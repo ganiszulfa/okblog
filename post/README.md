@@ -15,10 +15,12 @@ A RESTful web service for managing blog posts and pages, built with Java 21 and 
 - Java 21
 - Spring Boot 3.2.3
 - Spring Data JPA
-- PostgreSQL
+- Spring Validation
+- MySQL 8.1
 - H2 Database (for development/testing)
 - Lombok
 - Maven
+- Docker & Docker Compose
 
 ## API Endpoints
 
@@ -42,7 +44,7 @@ A RESTful web service for managing blog posts and pages, built with Java 21 and 
 ## Running the Application
 
 1. Clone the repository
-2. Configure PostgreSQL database connection in `application.properties`
+2. Configure MySQL database connection in `application.properties`
 3. Build the project: `mvn clean install`
 4. Run the application: `mvn spring-boot:run`
 
