@@ -15,7 +15,7 @@ A microservice for managing user profiles built with Go and go-kit.
 
 ### Create Profile
 ```
-POST /profiles
+POST /api/profiles
 Content-Type: application/json
 
 {
@@ -29,12 +29,12 @@ Content-Type: application/json
 
 ### Get Profile
 ```
-GET /profiles/{id}
+GET /api/profiles/{id}
 ```
 
 ### Update Profile
 ```
-PUT /profiles/{id}
+PUT /api/profiles/{id}
 Content-Type: application/json
 
 {
@@ -46,7 +46,7 @@ Content-Type: application/json
 
 ### Delete Profile
 ```
-DELETE /profiles/{id}
+DELETE /api/profiles/{id}
 ```
 
 ## Getting Started

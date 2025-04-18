@@ -93,7 +93,7 @@ func TestCreateProfileEndpoint(t *testing.T) {
 	reqBody, _ := json.Marshal(profileReq)
 
 	// Send request
-	resp, err := http.Post(testServer.URL+"/profiles", "application/json", bytes.NewBuffer(reqBody))
+	resp, err := http.Post(testServer.URL+"/api/profiles", "application/json", bytes.NewBuffer(reqBody))
 	assert.NoError(t, err)
 	defer resp.Body.Close()
 
@@ -132,7 +132,7 @@ func TestGetProfileEndpoint(t *testing.T) {
 	mockSvc.On("GetProfile", mock.Anything, id).Return(expectedProfile, nil)
 
 	// Send request
-	resp, err := http.Get(testServer.URL + "/profiles/" + id)
+	resp, err := http.Get(testServer.URL + "/api/profiles/" + id)
 	assert.NoError(t, err)
 	defer resp.Body.Close()
 
@@ -186,7 +186,7 @@ func TestUpdateProfileEndpoint(t *testing.T) {
 	})
 
 	// Create request
-	req, _ := http.NewRequest(http.MethodPut, testServer.URL+"/profiles/"+id, bytes.NewBuffer(reqBody))
+	req, _ := http.NewRequest(http.MethodPut, testServer.URL+"/api/profiles/"+id, bytes.NewBuffer(reqBody))
 	req.Header.Set("Content-Type", "application/json")
 
 	// Send request
@@ -219,7 +219,7 @@ func TestDeleteProfileEndpoint(t *testing.T) {
 	mockSvc.On("DeleteProfile", mock.Anything, id).Return(nil)
 
 	// Create request
-	req, _ := http.NewRequest(http.MethodDelete, testServer.URL+"/profiles/"+id, nil)
+	req, _ := http.NewRequest(http.MethodDelete, testServer.URL+"/api/profiles/"+id, nil)
 
 	// Send request
 	client := &http.Client{}

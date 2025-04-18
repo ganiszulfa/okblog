@@ -34,7 +34,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func (s *Server) routes() {
 	endpoints := MakeEndpoints(s.svc, s.logger)
 
-	s.router.HandleFunc("/profiles", func(w http.ResponseWriter, r *http.Request) {
+	s.router.HandleFunc("/api/profiles", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 			return
@@ -55,7 +55,7 @@ func (s *Server) routes() {
 		EncodeResponse(context.Background(), w, response)
 	}).Methods(http.MethodPost)
 
-	s.router.HandleFunc("/profiles/{id}", func(w http.ResponseWriter, r *http.Request) {
+	s.router.HandleFunc("/api/profiles/{id}", func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		id := vars["id"]
 
