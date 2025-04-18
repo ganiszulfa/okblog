@@ -86,11 +86,6 @@ func (s *Server) routes() {
 	}).Methods(http.MethodPost)
 
 	s.router.HandleFunc("/api/profiles/validate-token", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost {
-			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-			return
-		}
-
 		req, err := DecodeValidateTokenRequest(context.Background(), r)
 		if err != nil {
 			// Handle Authorization header errors with 401 Unauthorized
@@ -108,12 +103,17 @@ func (s *Server) routes() {
 				http.Error(w, err.Error(), http.StatusBadRequest)
 				return
 			}
+			// Return 401 for invalid token errors
+			if strings.Contains(err.Error(), "unauthorized: invalid token") {
+				http.Error(w, err.Error(), http.StatusUnauthorized)
+				return
+			}
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
 		EncodeResponse(context.Background(), w, response)
-	}).Methods(http.MethodPost)
+	}).Methods(http.MethodPost, http.MethodGet, http.MethodPut, http.MethodDelete)
 
 	s.router.HandleFunc("/api/profiles/{id}", func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)

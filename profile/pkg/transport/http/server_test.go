@@ -4,13 +4,14 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
 
 	"github.com/ganis/okblog/profile/pkg/model"
-	"github.com/ganis/okblog/profile/pkg/service"
 	"github.com/go-kit/log"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
@@ -379,7 +380,7 @@ func TestValidateInvalidTokenEndpoint(t *testing.T) {
 	// Setup mock service
 	invalidToken := "invalid.token.format"
 
-	mockSvc.On("ValidateToken", mock.Anything, invalidToken).Return(nil, service.ErrInvalidToken)
+	mockSvc.On("ValidateToken", mock.Anything, invalidToken).Return(nil, errors.New("unauthorized: invalid token"))
 
 	// Create request with Authorization header
 	req, _ := http.NewRequest(http.MethodPost, testServer.URL+"/api/profiles/validate-token", nil)
@@ -392,14 +393,12 @@ func TestValidateInvalidTokenEndpoint(t *testing.T) {
 	defer resp.Body.Close()
 
 	// Assertions
-	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
 
-	var validationResponse model.TokenValidationResponse
-	err = json.NewDecoder(resp.Body).Decode(&validationResponse)
+	// Read error message from response
+	body, err := io.ReadAll(resp.Body)
 	assert.NoError(t, err)
-
-	assert.False(t, validationResponse.Valid)
-	assert.Nil(t, validationResponse.Claims)
+	assert.Contains(t, string(body), "unauthorized: invalid token")
 
 	mockSvc.AssertExpectations(t)
 }

@@ -80,7 +80,7 @@ func makeValidateTokenEndpoint(svc service.Service) endpoint.Endpoint {
 		claims, err := svc.ValidateToken(ctx, req.Token)
 		if err != nil {
 			if err == service.ErrInvalidToken {
-				return model.TokenValidationResponse{Valid: false}, nil
+				return nil, errors.New("unauthorized: invalid token")
 			}
 			return nil, err
 		}
