@@ -30,6 +30,7 @@ services:
       DB_NAME: profile
       DB_SSLMODE: disable
       PORT: 8080
+      JWT_SIGNING_KEY: ${JWT_SIGNING_KEY:-my_secret_key}
     ports:
       - "8080:8080"
     depends_on:
