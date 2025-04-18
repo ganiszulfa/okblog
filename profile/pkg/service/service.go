@@ -2,8 +2,15 @@ package service
 
 import (
 	"context"
+	"encoding/base64"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"time"
+
+	"crypto/hmac"
+	"crypto/sha256"
+	"strings"
 
 	"github.com/ganis/okblog/profile/pkg/model"
 	"github.com/ganis/okblog/profile/pkg/repository"
@@ -13,16 +20,32 @@ import (
 )
 
 var (
-	ErrProfileNotFound    = errors.New("profile not found")
-	ErrInvalidInput       = errors.New("invalid input")
-	ErrInvalidCredentials = errors.New("invalid credentials")
-	ErrHashingFailed      = errors.New("password hashing failed")
+	ErrProfileNotFound       = errors.New("profile not found")
+	ErrInvalidInput          = errors.New("invalid input")
+	ErrInvalidCredentials    = errors.New("invalid credentials")
+	ErrHashingFailed         = errors.New("password hashing failed")
+	ErrTokenGenerationFailed = errors.New("failed to generate token")
 )
+
+// JWT signing key - in a real application, this should be stored securely
+// and loaded from an environment variable or secure secrets manager
+var jwtSigningKey = []byte("my_secret_key")
+
+// JWT token expiration time
+const jwtExpirationTime = 24 * time.Hour
+
+// JWTClaims represents the data stored in the JWT token
+type JWTClaims struct {
+	UserID    string    `json:"userId"`
+	Username  string    `json:"username"`
+	IssuedAt  time.Time `json:"issuedAt"`
+	ExpiresAt time.Time `json:"expiresAt"`
+}
 
 // Service defines the interface for profile operations
 type Service interface {
 	RegisterProfile(ctx context.Context, req model.RegisterProfileRequest) (*model.Profile, error)
-	Login(ctx context.Context, req model.LoginRequest) (*model.Profile, error)
+	Login(ctx context.Context, req model.LoginRequest) (*model.LoginResponse, error)
 	GetProfile(ctx context.Context, id string) (*model.Profile, error)
 	UpdateProfile(ctx context.Context, id string, req model.UpdateProfileRequest) (*model.Profile, error)
 	DeleteProfile(ctx context.Context, id string) error
@@ -79,7 +102,7 @@ func (s *profileService) RegisterProfile(ctx context.Context, req model.Register
 	return &profile, nil
 }
 
-func (s *profileService) Login(ctx context.Context, req model.LoginRequest) (*model.Profile, error) {
+func (s *profileService) Login(ctx context.Context, req model.LoginRequest) (*model.LoginResponse, error) {
 	if req.Username == "" || req.Password == "" {
 		return nil, ErrInvalidInput
 	}
@@ -100,10 +123,109 @@ func (s *profileService) Login(ctx context.Context, req model.LoginRequest) (*mo
 		return nil, ErrInvalidCredentials
 	}
 
+	// Generate JWT token
+	token, err := s.generateJWTToken(profile)
+	if err != nil {
+		s.logger.Log("err", err, "msg", "Failed to generate JWT token")
+		return nil, ErrTokenGenerationFailed
+	}
+
 	// Don't return the password in the response
 	profile.Password = ""
 
-	return profile, nil
+	// Create login response with profile and token
+	response := &model.LoginResponse{
+		Profile: profile,
+		Token:   token,
+	}
+
+	return response, nil
+}
+
+// generateJWTToken creates a new JWT token for the user
+func (s *profileService) generateJWTToken(profile *model.Profile) (string, error) {
+	// Create JWT header (algorithm & token type)
+	header := map[string]string{
+		"alg": "HS256",
+		"typ": "JWT",
+	}
+
+	// Convert header to JSON and encode to base64
+	headerJSON, err := json.Marshal(header)
+	if err != nil {
+		return "", err
+	}
+	headerBase64 := base64.RawURLEncoding.EncodeToString(headerJSON)
+
+	// Create JWT payload (claims)
+	now := time.Now()
+	expiresAt := now.Add(jwtExpirationTime)
+
+	claims := JWTClaims{
+		UserID:    profile.ID,
+		Username:  profile.Username,
+		IssuedAt:  now,
+		ExpiresAt: expiresAt,
+	}
+
+	// Convert payload to JSON and encode to base64
+	payloadJSON, err := json.Marshal(claims)
+	if err != nil {
+		return "", err
+	}
+	payloadBase64 := base64.RawURLEncoding.EncodeToString(payloadJSON)
+
+	// Create the signature
+	signatureInput := fmt.Sprintf("%s.%s", headerBase64, payloadBase64)
+	h := hmac.New(sha256.New, jwtSigningKey)
+	h.Write([]byte(signatureInput))
+	signature := h.Sum(nil)
+	signatureBase64 := base64.RawURLEncoding.EncodeToString(signature)
+
+	// Combine all parts to create the complete JWT token
+	token := fmt.Sprintf("%s.%s.%s", headerBase64, payloadBase64, signatureBase64)
+
+	return token, nil
+}
+
+// ValidateJWTToken validates a JWT token and returns the claims if valid
+func (s *profileService) ValidateJWTToken(tokenString string) (*JWTClaims, error) {
+	// Split the token into its parts
+	parts := strings.Split(tokenString, ".")
+	if len(parts) != 3 {
+		return nil, errors.New("invalid token format")
+	}
+
+	headerBase64, payloadBase64, signatureBase64 := parts[0], parts[1], parts[2]
+
+	// Verify the signature
+	signatureInput := fmt.Sprintf("%s.%s", headerBase64, payloadBase64)
+	h := hmac.New(sha256.New, jwtSigningKey)
+	h.Write([]byte(signatureInput))
+	expectedSignature := h.Sum(nil)
+	expectedSignatureBase64 := base64.RawURLEncoding.EncodeToString(expectedSignature)
+
+	if signatureBase64 != expectedSignatureBase64 {
+		return nil, errors.New("invalid token signature")
+	}
+
+	// Decode the payload
+	payloadJSON, err := base64.RawURLEncoding.DecodeString(payloadBase64)
+	if err != nil {
+		return nil, errors.New("invalid token payload encoding")
+	}
+
+	var claims JWTClaims
+	if err := json.Unmarshal(payloadJSON, &claims); err != nil {
+		return nil, errors.New("invalid token payload format")
+	}
+
+	// Check if the token is expired
+	if time.Now().After(claims.ExpiresAt) {
+		return nil, errors.New("token expired")
+	}
+
+	return &claims, nil
 }
 
 func (s *profileService) GetProfile(ctx context.Context, id string) (*model.Profile, error) {

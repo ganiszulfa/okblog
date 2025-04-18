@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
 	"time"
 
@@ -190,14 +191,23 @@ func TestLogin(t *testing.T) {
 	mockRepo.On("GetProfileByUsername", mock.Anything, username).Return(profileData, nil)
 
 	// Call the method
-	profile, err := svc.Login(context.Background(), loginReq)
+	loginResponse, err := svc.Login(context.Background(), loginReq)
 
 	// Assertions
 	assert.NoError(t, err)
-	assert.NotNil(t, profile)
-	assert.Equal(t, profileData.ID, profile.ID)
-	assert.Equal(t, profileData.Username, profile.Username)
-	assert.Equal(t, "", profile.Password) // Password should be cleared
+	assert.NotNil(t, loginResponse)
+	assert.NotNil(t, loginResponse.Profile)
+	assert.Equal(t, profileData.ID, loginResponse.Profile.ID)
+	assert.Equal(t, profileData.Username, loginResponse.Profile.Username)
+	assert.Equal(t, "", loginResponse.Profile.Password) // Password should be cleared
+
+	// Assert JWT token
+	assert.NotEmpty(t, loginResponse.Token)
+
+	// Validate token structure
+	tokenParts := strings.Split(loginResponse.Token, ".")
+	assert.Equal(t, 3, len(tokenParts), "JWT token should have 3 parts")
+
 	mockRepo.AssertExpectations(t)
 }
 
@@ -240,12 +250,12 @@ func TestLogin_InvalidCredentials(t *testing.T) {
 	mockRepo.On("GetProfileByUsername", mock.Anything, username).Return(profileData, nil)
 
 	// Call the method
-	profile, err := svc.Login(context.Background(), loginReq)
+	loginResponse, err := svc.Login(context.Background(), loginReq)
 
 	// Assertions
 	assert.Error(t, err)
 	assert.Equal(t, ErrInvalidCredentials, err)
-	assert.Nil(t, profile)
+	assert.Nil(t, loginResponse)
 	mockRepo.AssertExpectations(t)
 }
 

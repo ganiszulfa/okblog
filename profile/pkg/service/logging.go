@@ -40,7 +40,7 @@ func (mw *loggingMiddleware) RegisterProfile(ctx context.Context, req model.Regi
 	return mw.next.RegisterProfile(ctx, req)
 }
 
-func (mw *loggingMiddleware) Login(ctx context.Context, req model.LoginRequest) (profile *model.Profile, err error) {
+func (mw *loggingMiddleware) Login(ctx context.Context, req model.LoginRequest) (loginResponse *model.LoginResponse, err error) {
 	defer func(begin time.Time) {
 		mw.logger.Log(
 			"method", "Login",

@@ -31,6 +31,12 @@ type LoginRequest struct {
 	Password string `json:"password"`
 }
 
+// LoginResponse represents the response returned after successful login
+type LoginResponse struct {
+	Profile *Profile `json:"profile"`
+	Token   string   `json:"token"`
+}
+
 // UpdateProfileRequest represents the request to update an existing profile
 type UpdateProfileRequest struct {
 	FirstName string `json:"firstName,omitempty"`

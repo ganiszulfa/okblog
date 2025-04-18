@@ -62,11 +62,11 @@ func makeRegisterProfileEndpoint(svc service.Service) endpoint.Endpoint {
 func makeLoginEndpoint(svc service.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(model.LoginRequest)
-		profile, err := svc.Login(ctx, req)
+		loginResponse, err := svc.Login(ctx, req)
 		if err != nil {
 			return nil, err
 		}
-		return profile, nil
+		return loginResponse, nil
 	}
 }
 

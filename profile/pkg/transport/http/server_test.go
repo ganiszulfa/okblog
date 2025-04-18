@@ -30,12 +30,12 @@ func (m *MockService) RegisterProfile(ctx context.Context, req model.RegisterPro
 	return args.Get(0).(*model.Profile), args.Error(1)
 }
 
-func (m *MockService) Login(ctx context.Context, req model.LoginRequest) (*model.Profile, error) {
+func (m *MockService) Login(ctx context.Context, req model.LoginRequest) (*model.LoginResponse, error) {
 	args := m.Called(ctx, req)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*model.Profile), args.Error(1)
+	return args.Get(0).(*model.LoginResponse), args.Error(1)
 }
 
 func (m *MockService) GetProfile(ctx context.Context, id string) (*model.Profile, error) {
@@ -144,7 +144,14 @@ func TestLoginEndpoint(t *testing.T) {
 		UpdatedAt: time.Now(),
 	}
 
-	mockSvc.On("Login", mock.Anything, loginReq).Return(expectedProfile, nil)
+	expectedToken := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIxMjM0NTY3ODkwIiwidXNlcm5hbWUiOiJ0ZXN0dXNlciJ9.4iN4aEJXDXY74C8uUe163X5PDF48FiRUUQJ-HbyX4WA"
+
+	expectedResponse := &model.LoginResponse{
+		Profile: expectedProfile,
+		Token:   expectedToken,
+	}
+
+	mockSvc.On("Login", mock.Anything, loginReq).Return(expectedResponse, nil)
 
 	// Create request body
 	reqBody, _ := json.Marshal(loginReq)
@@ -157,14 +164,18 @@ func TestLoginEndpoint(t *testing.T) {
 	// Assertions
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 
-	var responseProfile model.Profile
-	err = json.NewDecoder(resp.Body).Decode(&responseProfile)
+	var loginResponse model.LoginResponse
+	err = json.NewDecoder(resp.Body).Decode(&loginResponse)
 	assert.NoError(t, err)
 
-	assert.Equal(t, expectedProfile.ID, responseProfile.ID)
-	assert.Equal(t, expectedProfile.Username, responseProfile.Username)
-	assert.Equal(t, expectedProfile.Email, responseProfile.Email)
-	assert.Empty(t, responseProfile.Password) // Password should not be in response
+	assert.NotNil(t, loginResponse.Profile)
+	assert.Equal(t, expectedProfile.ID, loginResponse.Profile.ID)
+	assert.Equal(t, expectedProfile.Username, loginResponse.Profile.Username)
+	assert.Equal(t, expectedProfile.Email, loginResponse.Profile.Email)
+	assert.Empty(t, loginResponse.Profile.Password) // Password should not be in response
+
+	// Verify token is returned
+	assert.Equal(t, expectedToken, loginResponse.Token)
 
 	mockSvc.AssertExpectations(t)
 }
