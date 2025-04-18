@@ -15,6 +15,7 @@ import (
 type Endpoints struct {
 	RegisterProfile endpoint.Endpoint
 	Login           endpoint.Endpoint
+	ValidateToken   endpoint.Endpoint
 	GetProfile      endpoint.Endpoint
 	UpdateProfile   endpoint.Endpoint
 	DeleteProfile   endpoint.Endpoint
@@ -42,6 +43,7 @@ func MakeEndpoints(svc service.Service, logger log.Logger) Endpoints {
 	return Endpoints{
 		RegisterProfile: loggingMiddleware(makeRegisterProfileEndpoint(svc)),
 		Login:           loggingMiddleware(makeLoginEndpoint(svc)),
+		ValidateToken:   loggingMiddleware(makeValidateTokenEndpoint(svc)),
 		GetProfile:      loggingMiddleware(makeGetProfileEndpoint(svc)),
 		UpdateProfile:   loggingMiddleware(makeUpdateProfileEndpoint(svc)),
 		DeleteProfile:   loggingMiddleware(makeDeleteProfileEndpoint(svc)),
@@ -67,6 +69,20 @@ func makeLoginEndpoint(svc service.Service) endpoint.Endpoint {
 			return nil, err
 		}
 		return loginResponse, nil
+	}
+}
+
+func makeValidateTokenEndpoint(svc service.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(model.TokenValidationRequest)
+		claims, err := svc.ValidateToken(ctx, req.Token)
+		if err != nil {
+			if err == service.ErrInvalidToken {
+				return model.TokenValidationResponse{Valid: false}, nil
+			}
+			return nil, err
+		}
+		return model.TokenValidationResponse{Valid: true, Claims: claims}, nil
 	}
 }
 
@@ -116,6 +132,14 @@ func DecodeRegisterProfileRequest(_ context.Context, r *http.Request) (interface
 
 func DecodeLoginRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	var req model.LoginRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return nil, err
+	}
+	return req, nil
+}
+
+func DecodeValidateTokenRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	var req model.TokenValidationRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, err
 	}

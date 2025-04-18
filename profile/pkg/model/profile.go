@@ -37,6 +37,25 @@ type LoginResponse struct {
 	Token   string   `json:"token"`
 }
 
+// TokenClaims represents the data stored in the JWT token
+type TokenClaims struct {
+	UserID    string    `json:"userId"`
+	Username  string    `json:"username"`
+	IssuedAt  time.Time `json:"issuedAt"`
+	ExpiresAt time.Time `json:"expiresAt"`
+}
+
+// TokenValidationRequest represents the request to validate a token
+type TokenValidationRequest struct {
+	Token string `json:"token"`
+}
+
+// TokenValidationResponse represents the response to a token validation request
+type TokenValidationResponse struct {
+	Valid  bool         `json:"valid"`
+	Claims *TokenClaims `json:"claims,omitempty"`
+}
+
 // UpdateProfileRequest represents the request to update an existing profile
 type UpdateProfileRequest struct {
 	FirstName string `json:"firstName,omitempty"`

@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/ganis/okblog/profile/pkg/model"
+	"github.com/ganis/okblog/profile/pkg/service"
 	"github.com/go-kit/log"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
@@ -57,6 +58,14 @@ func (m *MockService) UpdateProfile(ctx context.Context, id string, req model.Up
 func (m *MockService) DeleteProfile(ctx context.Context, id string) error {
 	args := m.Called(ctx, id)
 	return args.Error(0)
+}
+
+func (m *MockService) ValidateToken(ctx context.Context, token string) (*model.TokenClaims, error) {
+	args := m.Called(ctx, token)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*model.TokenClaims), args.Error(1)
 }
 
 func setupMockServer() (*MockService, *Server, *httptest.Server) {
@@ -316,4 +325,85 @@ func TestHandleNotFound(t *testing.T) {
 
 	// Assertions
 	assert.Equal(t, http.StatusNotFound, resp.StatusCode)
+}
+
+func TestValidateTokenEndpoint(t *testing.T) {
+	mockSvc, _, testServer := setupMockServer()
+	defer testServer.Close()
+
+	// Setup mock service
+	token := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIxMjM0NTY3ODkwIiwidXNlcm5hbWUiOiJ0ZXN0dXNlciJ9.4iN4aEJXDXY74C8uUe163X5PDF48FiRUUQJ-HbyX4WA"
+
+	validationReq := model.TokenValidationRequest{
+		Token: token,
+	}
+
+	// Create expected claims
+	now := time.Now()
+	expiresAt := now.Add(24 * time.Hour)
+
+	expectedClaims := &model.TokenClaims{
+		UserID:    "1234567890",
+		Username:  "testuser",
+		IssuedAt:  now,
+		ExpiresAt: expiresAt,
+	}
+
+	mockSvc.On("ValidateToken", mock.Anything, token).Return(expectedClaims, nil)
+
+	// Create request body
+	reqBody, _ := json.Marshal(validationReq)
+
+	// Send request
+	resp, err := http.Post(testServer.URL+"/api/profiles/validate-token", "application/json", bytes.NewBuffer(reqBody))
+	assert.NoError(t, err)
+	defer resp.Body.Close()
+
+	// Assertions
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+	var validationResponse model.TokenValidationResponse
+	err = json.NewDecoder(resp.Body).Decode(&validationResponse)
+	assert.NoError(t, err)
+
+	assert.True(t, validationResponse.Valid)
+	assert.NotNil(t, validationResponse.Claims)
+	assert.Equal(t, expectedClaims.UserID, validationResponse.Claims.UserID)
+	assert.Equal(t, expectedClaims.Username, validationResponse.Claims.Username)
+
+	mockSvc.AssertExpectations(t)
+}
+
+func TestValidateInvalidTokenEndpoint(t *testing.T) {
+	mockSvc, _, testServer := setupMockServer()
+	defer testServer.Close()
+
+	// Setup mock service
+	invalidToken := "invalid.token.format"
+
+	validationReq := model.TokenValidationRequest{
+		Token: invalidToken,
+	}
+
+	mockSvc.On("ValidateToken", mock.Anything, invalidToken).Return(nil, service.ErrInvalidToken)
+
+	// Create request body
+	reqBody, _ := json.Marshal(validationReq)
+
+	// Send request
+	resp, err := http.Post(testServer.URL+"/api/profiles/validate-token", "application/json", bytes.NewBuffer(reqBody))
+	assert.NoError(t, err)
+	defer resp.Body.Close()
+
+	// Assertions
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+	var validationResponse model.TokenValidationResponse
+	err = json.NewDecoder(resp.Body).Decode(&validationResponse)
+	assert.NoError(t, err)
+
+	assert.False(t, validationResponse.Valid)
+	assert.Nil(t, validationResponse.Claims)
+
+	mockSvc.AssertExpectations(t)
 }

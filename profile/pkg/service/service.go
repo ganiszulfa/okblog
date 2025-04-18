@@ -25,6 +25,7 @@ var (
 	ErrInvalidCredentials    = errors.New("invalid credentials")
 	ErrHashingFailed         = errors.New("password hashing failed")
 	ErrTokenGenerationFailed = errors.New("failed to generate token")
+	ErrInvalidToken          = errors.New("invalid token")
 )
 
 // JWT signing key - in a real application, this should be stored securely
@@ -46,6 +47,7 @@ type JWTClaims struct {
 type Service interface {
 	RegisterProfile(ctx context.Context, req model.RegisterProfileRequest) (*model.Profile, error)
 	Login(ctx context.Context, req model.LoginRequest) (*model.LoginResponse, error)
+	ValidateToken(ctx context.Context, token string) (*model.TokenClaims, error)
 	GetProfile(ctx context.Context, id string) (*model.Profile, error)
 	UpdateProfile(ctx context.Context, id string, req model.UpdateProfileRequest) (*model.Profile, error)
 	DeleteProfile(ctx context.Context, id string) error
@@ -226,6 +228,30 @@ func (s *profileService) ValidateJWTToken(tokenString string) (*JWTClaims, error
 	}
 
 	return &claims, nil
+}
+
+// ValidateToken validates a JWT token and returns the claims if valid
+func (s *profileService) ValidateToken(ctx context.Context, token string) (*model.TokenClaims, error) {
+	if token == "" {
+		return nil, ErrInvalidInput
+	}
+
+	// Validate the token
+	claims, err := s.ValidateJWTToken(token)
+	if err != nil {
+		s.logger.Log("err", err, "msg", "Token validation failed")
+		return nil, ErrInvalidToken
+	}
+
+	// Convert internal claims to the model claims
+	tokenClaims := &model.TokenClaims{
+		UserID:    claims.UserID,
+		Username:  claims.Username,
+		IssuedAt:  claims.IssuedAt,
+		ExpiresAt: claims.ExpiresAt,
+	}
+
+	return tokenClaims, nil
 }
 
 func (s *profileService) GetProfile(ctx context.Context, id string) (*model.Profile, error) {

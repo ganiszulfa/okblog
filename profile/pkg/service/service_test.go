@@ -430,3 +430,88 @@ func TestDeleteProfile_NotFound(t *testing.T) {
 	assert.Equal(t, ErrProfileNotFound, err)
 	mockRepo.AssertExpectations(t)
 }
+
+func TestValidateToken(t *testing.T) {
+	// Create a mock repository
+	mockRepo := new(MockRepository)
+	// Create a noop logger
+	logger := log.NewNopLogger()
+	// Create a service with the mock repository
+	svc := NewService(mockRepo, logger)
+
+	// Setup test data
+	username := "testuser"
+	password := "password123"
+	id := uuid.New().String()
+
+	// Generate a real bcrypt hash of the password for testing
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	assert.NoError(t, err, "Password hashing should not error")
+
+	profileData := &model.Profile{
+		ID:        id,
+		Username:  username,
+		Email:     "test@example.com",
+		Password:  string(hashedPassword), // Use the hashed password
+		FirstName: "Test",
+		LastName:  "User",
+		Bio:       "This is a test user",
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+
+	loginReq := model.LoginRequest{
+		Username: username,
+		Password: password, // Plain text password for login request
+	}
+
+	// Setup expectations
+	mockRepo.On("GetProfileByUsername", mock.Anything, username).Return(profileData, nil)
+
+	// Login to get a token
+	loginResponse, err := svc.Login(context.Background(), loginReq)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, loginResponse.Token)
+
+	// Get the token from the login response
+	token := loginResponse.Token
+
+	// Validate the token
+	claims, err := svc.ValidateToken(context.Background(), token)
+
+	// Assertions
+	assert.NoError(t, err)
+	assert.NotNil(t, claims)
+	assert.Equal(t, id, claims.UserID)
+	assert.Equal(t, username, claims.Username)
+	// Expiration time should be in the future
+	assert.True(t, claims.ExpiresAt.After(time.Now()))
+
+	mockRepo.AssertExpectations(t)
+}
+
+func TestValidateToken_Invalid(t *testing.T) {
+	// Create a mock repository
+	mockRepo := new(MockRepository)
+	// Create a noop logger
+	logger := log.NewNopLogger()
+	// Create a service with the mock repository
+	svc := NewService(mockRepo, logger)
+
+	// Test with an invalid token
+	invalidToken := "invalid.token.format"
+	claims, err := svc.ValidateToken(context.Background(), invalidToken)
+
+	// Assertions
+	assert.Error(t, err)
+	assert.Equal(t, ErrInvalidToken, err)
+	assert.Nil(t, claims)
+
+	// Test with an empty token
+	claims, err = svc.ValidateToken(context.Background(), "")
+
+	// Assertions
+	assert.Error(t, err)
+	assert.Equal(t, ErrInvalidInput, err)
+	assert.Nil(t, claims)
+}

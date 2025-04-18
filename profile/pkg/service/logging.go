@@ -53,6 +53,18 @@ func (mw *loggingMiddleware) Login(ctx context.Context, req model.LoginRequest) 
 	return mw.next.Login(ctx, req)
 }
 
+func (mw *loggingMiddleware) ValidateToken(ctx context.Context, token string) (claims *model.TokenClaims, err error) {
+	defer func(begin time.Time) {
+		mw.logger.Log(
+			"method", "ValidateToken",
+			"took", time.Since(begin),
+			"err", err,
+		)
+	}(time.Now())
+
+	return mw.next.ValidateToken(ctx, token)
+}
+
 func (mw *loggingMiddleware) GetProfile(ctx context.Context, id string) (profile *model.Profile, err error) {
 	defer func(begin time.Time) {
 		mw.logger.Log(

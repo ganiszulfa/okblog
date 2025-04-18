@@ -84,6 +84,31 @@ func (s *Server) routes() {
 		EncodeResponse(context.Background(), w, response)
 	}).Methods(http.MethodPost)
 
+	s.router.HandleFunc("/api/profiles/validate-token", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+
+		req, err := DecodeValidateTokenRequest(context.Background(), r)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		response, err := endpoints.ValidateToken(context.Background(), req)
+		if err != nil {
+			if err == service.ErrInvalidInput {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		EncodeResponse(context.Background(), w, response)
+	}).Methods(http.MethodPost)
+
 	s.router.HandleFunc("/api/profiles/{id}", func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		id := vars["id"]
