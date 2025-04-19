@@ -16,6 +16,8 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - default
 
   profile-service:
     build:
@@ -31,12 +33,21 @@ services:
       DB_SSLMODE: disable
       PORT: 8080
       JWT_SIGNING_KEY: ${JWT_SIGNING_KEY:-my_secret_key}
+      USE_KIBANA_LOGGING: "true"
+      ELASTICSEARCH_URL: "http://host.docker.internal:9200"
+      ELASTICSEARCH_INDEX: "profile-service-logs"
+      SERVICE_NAME: "profile-service"
     ports:
       - "8080:8080"
     depends_on:
       postgres:
         condition: service_healthy
     restart: on-failure
+    networks:
+      - default
 
 volumes:
-  postgres_data: 
+  postgres_data:
+
+networks:
+  default:

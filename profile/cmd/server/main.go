@@ -8,6 +8,7 @@ import (
 	"syscall"
 
 	"github.com/ganis/okblog/profile/pkg/database"
+	"github.com/ganis/okblog/profile/pkg/logging"
 	"github.com/ganis/okblog/profile/pkg/repository"
 	"github.com/ganis/okblog/profile/pkg/service"
 	httptransport "github.com/ganis/okblog/profile/pkg/transport/http"
@@ -16,10 +17,27 @@ import (
 )
 
 func main() {
-	// Create a logger
+	// Create a base logger
 	var logger log.Logger
 	logger = log.NewLogfmtLogger(os.Stderr)
 	logger = log.With(logger, "ts", log.DefaultTimestampUTC, "caller", log.DefaultCaller)
+
+	// Setup Kibana logger if enabled
+	useKibana := getEnvBool("USE_KIBANA_LOGGING", false)
+	if useKibana {
+		// Get Kibana logger configuration
+		kibanaConfig := logging.DefaultConfig()
+
+		// Create Kibana logger
+		kibanaLogger, err := logging.NewKibanaLogger(kibanaConfig, logger)
+		if err != nil {
+			level.Error(logger).Log("msg", "Failed to initialize Kibana logger", "err", err)
+		} else {
+			// Use Kibana logger as the primary logger
+			logger = kibanaLogger
+			level.Info(logger).Log("msg", "Kibana logging enabled")
+		}
+	}
 
 	dbConfig := getDbConfig(logger)
 	db, err := database.NewPostgresDB(dbConfig, logger)
@@ -89,4 +107,17 @@ func getEnv(key, defaultValue string) string {
 		return defaultValue
 	}
 	return value
+}
+
+// getEnvBool gets a boolean environment variable or returns a default value
+func getEnvBool(key string, defaultValue bool) bool {
+	value := os.Getenv(key)
+	if value == "" {
+		return defaultValue
+	}
+	boolValue, err := strconv.ParseBool(value)
+	if err != nil {
+		return defaultValue
+	}
+	return boolValue
 }
