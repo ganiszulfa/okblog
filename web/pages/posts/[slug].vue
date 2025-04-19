@@ -9,7 +9,6 @@
           <span v-if="post.publishedAt" class="mr-4">
             {{ formatDate(post.publishedAt) }}
           </span>
-          <span class="mr-4">{{ post.readTime }} min read</span>
           <span>{{ post.viewCount }} views</span>
         </div>
         
@@ -44,9 +43,9 @@
       
       <!-- Navigation -->
       <div class="mt-12">
-        <nuxt-link to="/" class="text-blue-600 hover:text-blue-800">
+        <NuxtLink to="/" class="text-blue-600 hover:text-blue-800">
           &larr; Back to all posts
-        </nuxt-link>
+        </NuxtLink>
       </div>
     </div>
     
@@ -58,63 +57,62 @@
   </div>
 </template>
 
-<script>
-export default {
-  data() {
-    return {
-      post: null,
-      error: null
-    };
-  },
-  
-  async asyncData({ $api, params, error }) {
-    try {
-      const slug = params.slug;
-      const response = await $api.posts.getPostBySlug(slug);
-      
-      // Increment the view count
-      if (response.data && response.data.id) {
-        try {
-          await $api.posts.incrementViewCount(response.data.id);
-        } catch (e) {
-          console.error('Error incrementing view count:', e);
-        }
+<script setup>
+import { ref } from 'vue';
+const route = useRoute();
+const { $api } = useNuxtApp();
+
+const post = ref(null);
+const error = ref(null);
+
+// Get the slug from the route params
+const slug = route.params.slug;
+
+// Fetch the post data
+const fetchPost = async () => {
+  try {
+    console.log('Fetching post with slug:', slug);
+    const response = await $api.posts.getPostBySlug(slug);
+    console.log('API Response for post:', response);
+    
+    post.value = response.data?.data;
+    
+    // Increment the view count
+    if (post.value && post.value.id) {
+      try {
+        await $api.posts.incrementViewCount(post.value.id);
+        console.log('View count incremented for post ID:', post.value.id);
+      } catch (e) {
+        console.error('Error incrementing view count:', e);
       }
-      
-      return {
-        post: response.data
-      };
-    } catch (err) {
-      console.error('Error fetching post:', err);
-      return {
-        error: 'Post not found or an error occurred'
-      };
     }
-  },
-  
-  methods: {
-    formatDate(dateString) {
-      if (!dateString) return '';
-      const date = new Date(dateString);
-      return new Intl.DateTimeFormat('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      }).format(date);
-    }
-  },
-  
-  head() {
-    return this.post ? {
-      title: this.post.title,
-      meta: [
-        { hid: 'description', name: 'description', content: this.post.summary }
-      ]
-    } : {
-      title: 'Post Not Found'
-    };
+  } catch (err) {
+    console.error('Error fetching post:', err);
+    error.value = 'Post not found or an error occurred';
   }
 };
+
+// Format date function
+const formatDate = (dateString) => {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  return new Intl.DateTimeFormat('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  }).format(date);
+};
+
+// Meta tags for the page
+useHead(() => ({
+  title: post.value ? post.value.title : 'Post Not Found',
+  meta: [
+    { name: 'description', content: post.value ? post.value.summary : 'Post not found' }
+  ]
+}));
+
+// Fetch data on mount
+onMounted(fetchPost);
 </script>
 
 <style>

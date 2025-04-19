@@ -30,7 +30,6 @@
           </span>
         </div>
         <div class="flex justify-between items-center text-sm text-gray-500">
-          <span>{{ post.readTime }} min read</span>
           <span>{{ post.viewCount }} views</span>
         </div>
       </article>
@@ -43,6 +42,16 @@
     <!-- Pagination -->
     <div v-if="totalPages > 1" class="flex justify-center mt-8">
       <nav class="flex items-center gap-1">
+        <button 
+          @click="changePage(1)" 
+          :disabled="currentPage === 1" 
+          class="px-3 py-1 rounded border"
+          :class="currentPage === 1 ? 'text-gray-400 border-gray-200' : 'border-gray-300 hover:bg-gray-50'"
+          aria-label="First page"
+        >
+          &laquo;
+        </button>
+        
         <button 
           @click="changePage(currentPage - 1)" 
           :disabled="currentPage === 1" 
@@ -64,11 +73,21 @@
         
         <button 
           @click="changePage(currentPage + 1)" 
-          :disabled="currentPage === totalPages" 
+          :disabled="currentPage === totalPages"
           class="px-3 py-1 rounded border"
           :class="currentPage === totalPages ? 'text-gray-400 border-gray-200' : 'border-gray-300 hover:bg-gray-50'"
         >
           Next
+        </button>
+        
+        <button 
+          @click="changePage(totalPages)" 
+          :disabled="currentPage === totalPages" 
+          class="px-3 py-1 rounded border"
+          :class="currentPage === totalPages ? 'text-gray-400 border-gray-200' : 'border-gray-300 hover:bg-gray-50'"
+          aria-label="Last page"
+        >
+          &raquo;
         </button>
       </nav>
     </div>
@@ -86,10 +105,7 @@ const posts = ref([]);
 const currentPage = ref(parseInt(route.query.page) || 1);
 const totalItems = ref(0);
 const perPage = ref(10);
-
-const totalPages = computed(() => {
-  return Math.ceil(totalItems.value / perPage.value);
-});
+const totalPages = ref(1);
 
 const paginationRange = computed(() => {
   // Show 5 page buttons at most
@@ -125,14 +141,21 @@ const changePage = (page) => {
 const fetchPosts = async () => {
   try {
     const response = await $api.posts.getPosts(currentPage.value);
+    console.log('API Response:', response);
     posts.value = response.data?.data || [];
-    totalItems.value = response.data?.meta?.total_count || 0;
-    perPage.value = response.data?.meta?.per_page || 10;
+    totalItems.value = response.data?.pagination?.total_items || 0;
+    perPage.value = response.data?.pagination?.per_page || 10;
+    totalPages.value = response.data?.pagination?.total_pages || 1;
+    
+    console.log('Total items:', totalItems.value);
+    console.log('Per page:', perPage.value);
+    console.log('Total pages from API:', totalPages.value);
   } catch (error) {
     console.error('Error fetching posts:', error);
     posts.value = [];
     totalItems.value = 0;
     perPage.value = 10;
+    totalPages.value = 1;
   }
 };
 
