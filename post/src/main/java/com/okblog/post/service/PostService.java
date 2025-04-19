@@ -1,5 +1,6 @@
 package com.okblog.post.service;
 
+import com.okblog.post.dto.PageResponse;
 import com.okblog.post.dto.PostRequest;
 import com.okblog.post.dto.PostResponse;
 import com.okblog.post.model.Post;
@@ -9,31 +10,31 @@ import java.util.UUID;
 
 public interface PostService {
     
-    PostResponse createPost(PostRequest request, UUID userId);
+    PageResponse<PostResponse> createPost(PostRequest request, UUID userId);
     
-    PostResponse getPostById(UUID id);
+    PageResponse<PostResponse> getPostById(UUID id);
     
-    PostResponse getPostBySlug(String slug);
+    PageResponse<PostResponse> getPostBySlug(String slug);
     
-    List<PostResponse> getAllPosts();
+    PageResponse<List<PostResponse>> getAllPosts(int page, int perPage);
     
-    List<PostResponse> getPostsByProfileId(UUID profileId);
+    PageResponse<List<PostResponse>> getPostsByProfileId(UUID profileId, int page, int perPage);
     
-    List<PostResponse> getPostsByProfileIdAndPublished(UUID profileId, boolean isPublished);
+    PageResponse<List<PostResponse>> getPostsByProfileIdAndPublished(UUID profileId, boolean isPublished, int page, int perPage);
     
-    List<PostResponse> getPostsByType(Post.PostType type);
+    PageResponse<List<PostResponse>> getPostsByType(Post.PostType type, int page, int perPage);
     
-    List<PostResponse> getPostsByTypeAndPublished(Post.PostType type, boolean isPublished);
+    PageResponse<List<PostResponse>> getPostsByTypeAndPublished(Post.PostType type, boolean isPublished, int page, int perPage);
     
-    List<PostResponse> getPostsByTag(String tag);
+    PageResponse<List<PostResponse>> getPostsByTag(String tag, int page, int perPage);
     
-    PostResponse updatePost(UUID id, PostRequest request);
+    PageResponse<PostResponse> updatePost(UUID id, PostRequest request);
     
-    PostResponse publishPost(UUID id);
+    PageResponse<PostResponse> publishPost(UUID id);
     
-    PostResponse unpublishPost(UUID id);
+    PageResponse<PostResponse> unpublishPost(UUID id);
     
     void deletePost(UUID id);
     
-    PostResponse incrementViewCount(UUID id);
+    PageResponse<PostResponse> incrementViewCount(UUID id);
 } 

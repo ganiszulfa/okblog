@@ -23,6 +23,7 @@ public class PostResponse {
     private String content;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private LocalDateTime publishedAt;
     private Set<String> tags;
     private boolean isPublished;
     private String slug;

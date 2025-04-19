@@ -1,6 +1,8 @@
 package com.okblog.post.repository;
 
 import com.okblog.post.model.Post;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -11,15 +13,15 @@ import java.util.UUID;
 @Repository
 public interface PostRepository extends JpaRepository<Post, UUID> {
     
-    List<Post> findByProfileId(UUID profileId);
+    Page<Post> findByProfileId(UUID profileId, Pageable pageable);
     
-    List<Post> findByProfileIdAndIsPublished(UUID profileId, boolean isPublished);
+    Page<Post> findByProfileIdAndIsPublished(UUID profileId, boolean isPublished, Pageable pageable);
     
-    List<Post> findByType(Post.PostType type);
+    Page<Post> findByType(Post.PostType type, Pageable pageable);
     
-    List<Post> findByTypeAndIsPublished(Post.PostType type, boolean isPublished);
+    Page<Post> findByTypeAndIsPublished(Post.PostType type, boolean isPublished, Pageable pageable);
     
     Optional<Post> findBySlug(String slug);
     
-    List<Post> findByTagsContaining(String tag);
+    Page<Post> findByTagsContaining(String tag, Pageable pageable);
 } 

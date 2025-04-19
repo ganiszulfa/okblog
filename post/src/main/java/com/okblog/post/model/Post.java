@@ -54,6 +54,8 @@ public class Post {
     @Builder.Default
     private boolean isPublished = false;
     
+    private LocalDateTime publishedAt;
+    
     private String slug;
     
     private String excerpt;

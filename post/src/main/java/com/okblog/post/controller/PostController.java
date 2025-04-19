@@ -1,6 +1,7 @@
 package com.okblog.post.controller;
 
 import com.okblog.post.annotation.RequiresUserId;
+import com.okblog.post.dto.PageResponse;
 import com.okblog.post.dto.PostRequest;
 import com.okblog.post.dto.PostResponse;
 import com.okblog.post.model.Post;
@@ -22,69 +23,90 @@ import java.util.UUID;
 public class PostController {
 
     private final PostService postService;
+    private static final int DEFAULT_PAGE = 1;
+    private static final int DEFAULT_PER_PAGE = 10;
     
     @PostMapping
-    public ResponseEntity<PostResponse> createPost(@Valid @RequestBody PostRequest request, @RequiresUserId UUID userId) {
+    public ResponseEntity<PageResponse<PostResponse>> createPost(@Valid @RequestBody PostRequest request, @RequiresUserId UUID userId) {
         log.info("Authenticated userId from JWT token: {}", userId);
         return new ResponseEntity<>(postService.createPost(request, userId), HttpStatus.CREATED);
     }
     
     @GetMapping("/{id}")
-    public ResponseEntity<PostResponse> getPostById(@PathVariable UUID id) {
+    public ResponseEntity<PageResponse<PostResponse>> getPostById(@PathVariable UUID id) {
         return ResponseEntity.ok(postService.getPostById(id));
     }
     
     @GetMapping("/slug/{slug}")
-    public ResponseEntity<PostResponse> getPostBySlug(@PathVariable String slug) {
+    public ResponseEntity<PageResponse<PostResponse>> getPostBySlug(@PathVariable String slug) {
         return ResponseEntity.ok(postService.getPostBySlug(slug));
     }
     
     @GetMapping
-    public ResponseEntity<List<PostResponse>> getAllPosts() {
-        return ResponseEntity.ok(postService.getAllPosts());
+    public ResponseEntity<PageResponse<List<PostResponse>>> getAllPosts(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int per_page) {
+        return ResponseEntity.ok(postService.getAllPosts(page, per_page));
     }
     
     @GetMapping("/profile/{profileId}")
-    public ResponseEntity<List<PostResponse>> getPostsByProfileId(@PathVariable UUID profileId) {
-        return ResponseEntity.ok(postService.getPostsByProfileId(profileId));
+    public ResponseEntity<PageResponse<List<PostResponse>>> getPostsByProfileId(
+            @PathVariable UUID profileId,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int per_page) {
+        return ResponseEntity.ok(postService.getPostsByProfileId(profileId, page, per_page));
     }
     
     @GetMapping("/my-posts")
-    public ResponseEntity<List<PostResponse>> getMyPosts(@RequiresUserId UUID userId) {
-        return ResponseEntity.ok(postService.getPostsByProfileId(userId));
+    public ResponseEntity<PageResponse<List<PostResponse>>> getMyPosts(
+            @RequiresUserId UUID userId,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int per_page) {
+        return ResponseEntity.ok(postService.getPostsByProfileId(userId, page, per_page));
     }
     
     @GetMapping("/my-posts/published/{isPublished}")
-    public ResponseEntity<List<PostResponse>> getMyPostsByPublishedStatus(
+    public ResponseEntity<PageResponse<List<PostResponse>>> getMyPostsByPublishedStatus(
             @RequiresUserId UUID userId,
-            @PathVariable boolean isPublished) {
-        return ResponseEntity.ok(postService.getPostsByProfileIdAndPublished(userId, isPublished));
+            @PathVariable boolean isPublished,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int per_page) {
+        return ResponseEntity.ok(postService.getPostsByProfileIdAndPublished(userId, isPublished, page, per_page));
     }
     
     @GetMapping("/type/{type}")
-    public ResponseEntity<List<PostResponse>> getPostsByType(@PathVariable Post.PostType type) {
-        return ResponseEntity.ok(postService.getPostsByType(type));
+    public ResponseEntity<PageResponse<List<PostResponse>>> getPostsByType(
+            @PathVariable Post.PostType type,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int per_page) {
+        return ResponseEntity.ok(postService.getPostsByType(type, page, per_page));
     }
     
     @GetMapping("/type/{type}/published/{isPublished}")
-    public ResponseEntity<List<PostResponse>> getPostsByTypeAndPublished(
+    public ResponseEntity<PageResponse<List<PostResponse>>> getPostsByTypeAndPublished(
             @PathVariable Post.PostType type,
-            @PathVariable boolean isPublished) {
-        return ResponseEntity.ok(postService.getPostsByTypeAndPublished(type, isPublished));
+            @PathVariable boolean isPublished,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int per_page) {
+        return ResponseEntity.ok(postService.getPostsByTypeAndPublished(type, isPublished, page, per_page));
     }
     
     @GetMapping("/tag/{tag}")
-    public ResponseEntity<List<PostResponse>> getPostsByTag(@PathVariable String tag) {
-        return ResponseEntity.ok(postService.getPostsByTag(tag));
+    public ResponseEntity<PageResponse<List<PostResponse>>> getPostsByTag(
+            @PathVariable String tag,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int per_page) {
+        return ResponseEntity.ok(postService.getPostsByTag(tag, page, per_page));
     }
     
     @PutMapping("/{id}")
-    public ResponseEntity<PostResponse> updatePost(
+    public ResponseEntity<PageResponse<PostResponse>> updatePost(
             @PathVariable UUID id,
             @Valid @RequestBody PostRequest request,
             @RequiresUserId UUID userId) {
         // First check if the post belongs to this user
-        PostResponse existingPost = postService.getPostById(id);
+        PageResponse<PostResponse> existingPostResponse = postService.getPostById(id);
+        PostResponse existingPost = existingPostResponse.getData();
         if (!existingPost.getProfileId().equals(userId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
@@ -92,9 +114,10 @@ public class PostController {
     }
     
     @PutMapping("/{id}/publish")
-    public ResponseEntity<PostResponse> publishPost(@PathVariable UUID id, @RequiresUserId UUID userId) {
+    public ResponseEntity<PageResponse<PostResponse>> publishPost(@PathVariable UUID id, @RequiresUserId UUID userId) {
         // First check if the post belongs to this user
-        PostResponse existingPost = postService.getPostById(id);
+        PageResponse<PostResponse> existingPostResponse = postService.getPostById(id);
+        PostResponse existingPost = existingPostResponse.getData();
         if (!existingPost.getProfileId().equals(userId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
@@ -102,9 +125,10 @@ public class PostController {
     }
     
     @PutMapping("/{id}/unpublish")
-    public ResponseEntity<PostResponse> unpublishPost(@PathVariable UUID id, @RequiresUserId UUID userId) {
+    public ResponseEntity<PageResponse<PostResponse>> unpublishPost(@PathVariable UUID id, @RequiresUserId UUID userId) {
         // First check if the post belongs to this user
-        PostResponse existingPost = postService.getPostById(id);
+        PageResponse<PostResponse> existingPostResponse = postService.getPostById(id);
+        PostResponse existingPost = existingPostResponse.getData();
         if (!existingPost.getProfileId().equals(userId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
@@ -114,7 +138,8 @@ public class PostController {
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletePost(@PathVariable UUID id, @RequiresUserId UUID userId) {
         // First check if the post belongs to this user
-        PostResponse existingPost = postService.getPostById(id);
+        PageResponse<PostResponse> existingPostResponse = postService.getPostById(id);
+        PostResponse existingPost = existingPostResponse.getData();
         if (!existingPost.getProfileId().equals(userId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
@@ -123,7 +148,7 @@ public class PostController {
     }
     
     @PutMapping("/{id}/view")
-    public ResponseEntity<PostResponse> incrementViewCount(@PathVariable UUID id) {
+    public ResponseEntity<PageResponse<PostResponse>> incrementViewCount(@PathVariable UUID id) {
         return ResponseEntity.ok(postService.incrementViewCount(id));
     }
 } 
