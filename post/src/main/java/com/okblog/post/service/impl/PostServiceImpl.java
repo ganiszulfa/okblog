@@ -26,7 +26,7 @@ public class PostServiceImpl implements PostService {
     @Override
     @Transactional
     public PostResponse createPost(PostRequest request, UUID userId) {
-        log.info("X-USERID header value: {}", userId);
+        log.info("Authenticated userId from JWT token: {}", userId);
         Post post = Post.builder()
                 .profileId(userId)
                 .type(request.getType())

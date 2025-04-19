@@ -25,7 +25,7 @@ public class PostController {
     
     @PostMapping
     public ResponseEntity<PostResponse> createPost(@Valid @RequestBody PostRequest request, @RequiresUserId UUID userId) {
-        log.info("X-USERID header value: {}", userId);
+        log.info("Authenticated userId from JWT token: {}", userId);
         return new ResponseEntity<>(postService.createPost(request, userId), HttpStatus.CREATED);
     }
     

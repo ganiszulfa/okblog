@@ -7,8 +7,9 @@ import java.lang.annotation.Target;
 
 /**
  * Annotation that indicates a parameter should be automatically filled with 
- * the user ID from the X-USERID header.
- * If the header is missing or invalid, a 401 Unauthorized response will be returned.
+ * the user ID from the JWT token in the Authorization header.
+ * If the header is missing, invalid, or the JWT token doesn't contain a valid userId claim,
+ * a 401 Unauthorized response will be returned.
  * 
  * This annotation can be used on method parameters of type UUID.
  */

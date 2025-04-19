@@ -51,6 +51,7 @@ public class PostControllerTest {
     private UUID profileId;
     private PostResponse postResponse;
     private PostRequest postRequest;
+    private static final String TEST_JWT_TOKEN = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIwMDAwMDAwMC0wMDAwLTAwMDAtMDAwMC0wMDAwMDAwMDAwMDEiLCJ1c2VybmFtZSI6InRlc3RfdXNlciIsImlzc3VlZEF0IjoiMjAyNC0wMS0wMVQwMDowMDowMFoiLCJleHBpcmVzQXQiOiIyMDI0LTAxLTAyVDAwOjAwOjAwWiJ9.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c";
 
     // Create a mock resolver that always returns a test UUID for @RequiresUserId parameters
     public static class MockUserIdArgumentResolver extends UserIdArgumentResolver {
@@ -107,7 +108,7 @@ public class PostControllerTest {
         mockMvc.perform(post("/api/posts")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(postRequest))
-                .header("X-USERID", MockUserIdArgumentResolver.TEST_USER_ID.toString())) // Add the header
+                .header("Authorization", TEST_JWT_TOKEN))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(postId.toString()))
                 .andExpect(jsonPath("$.profileId").value(profileId.toString()))
@@ -140,7 +141,7 @@ public class PostControllerTest {
                 .thenReturn(List.of(postResponse));
 
         mockMvc.perform(get("/api/posts/my-posts")
-                .header("X-USERID", MockUserIdArgumentResolver.TEST_USER_ID.toString()))
+                .header("Authorization", TEST_JWT_TOKEN))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0].id").value(postId.toString()));
@@ -156,7 +157,7 @@ public class PostControllerTest {
         mockMvc.perform(put("/api/posts/{id}", postId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(postRequest))
-                .header("X-USERID", MockUserIdArgumentResolver.TEST_USER_ID.toString()))
+                .header("Authorization", TEST_JWT_TOKEN))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(postId.toString()));
     }
@@ -178,7 +179,7 @@ public class PostControllerTest {
         mockMvc.perform(put("/api/posts/{id}", postId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(postRequest))
-                .header("X-USERID", MockUserIdArgumentResolver.TEST_USER_ID.toString()))
+                .header("Authorization", TEST_JWT_TOKEN))
                 .andExpect(status().isForbidden());
     }
     
@@ -190,7 +191,7 @@ public class PostControllerTest {
         when(postService.publishPost(postId)).thenReturn(postResponse);
 
         mockMvc.perform(put("/api/posts/{id}/publish", postId)
-                .header("X-USERID", MockUserIdArgumentResolver.TEST_USER_ID.toString()))
+                .header("Authorization", TEST_JWT_TOKEN))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(postId.toString()));
     }
@@ -203,7 +204,7 @@ public class PostControllerTest {
         when(postService.unpublishPost(postId)).thenReturn(postResponse);
 
         mockMvc.perform(put("/api/posts/{id}/unpublish", postId)
-                .header("X-USERID", MockUserIdArgumentResolver.TEST_USER_ID.toString()))
+                .header("Authorization", TEST_JWT_TOKEN))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(postId.toString()));
     }
@@ -216,7 +217,7 @@ public class PostControllerTest {
         doNothing().when(postService).deletePost(postId);
 
         mockMvc.perform(delete("/api/posts/{id}", postId)
-                .header("X-USERID", MockUserIdArgumentResolver.TEST_USER_ID.toString()))
+                .header("Authorization", TEST_JWT_TOKEN))
                 .andExpect(status().isNoContent());
     }
     
@@ -235,7 +236,7 @@ public class PostControllerTest {
         when(postService.getPostById(postId)).thenReturn(unauthorizedResponse);
 
         mockMvc.perform(delete("/api/posts/{id}", postId)
-                .header("X-USERID", MockUserIdArgumentResolver.TEST_USER_ID.toString()))
+                .header("Authorization", TEST_JWT_TOKEN))
                 .andExpect(status().isForbidden());
     }
 } 
