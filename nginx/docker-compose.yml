@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   nginx:
     image: nginx:stable-alpine
@@ -8,44 +6,9 @@ services:
       - "80:80"
     volumes:
       - ./api-gateway.conf:/etc/nginx/nginx.conf:ro
-    depends_on:
-      - post-service
-      - profile-service
-      - auth-service
-    networks:
-      - api-network
-    restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost/health"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 5s
-
-  post-service:
-    image: ${POST_SERVICE_IMAGE:-post-service:latest}
-    container_name: post-service
-    networks:
-      - api-network
-    restart: unless-stopped
-    # Add environment variables, volumes, and other configuration as needed
-
-  profile-service:
-    image: ${PROFILE_SERVICE_IMAGE:-profile-service:latest}
-    container_name: profile-service
-    networks:
-      - api-network
-    restart: unless-stopped
-    # Add environment variables, volumes, and other configuration as needed
-
-  auth-service:
-    image: ${AUTH_SERVICE_IMAGE:-auth-service:latest}
-    container_name: auth-service
-    networks:
-      - api-network
-    restart: unless-stopped
-    # Add environment variables, volumes, and other configuration as needed
-
-networks:
-  api-network:
-    driver: bridge 
