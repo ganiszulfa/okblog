@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -79,7 +80,7 @@ public class PostServiceImpl implements PostService {
     @Override
     @Transactional(readOnly = true)
     public PageResponse<List<PostResponse>> getAllPosts(int page, int perPage) {
-        Pageable pageable = PageRequest.of(page - 1, perPage);
+        Pageable pageable = PageRequest.of(page - 1, perPage, Sort.by(Sort.Direction.DESC, "publishedAt"));
         Page<Post> postPage = postRepository.findAll(pageable);
         
         List<PostResponse> postResponses = postPage.getContent().stream()
@@ -95,7 +96,7 @@ public class PostServiceImpl implements PostService {
     @Override
     @Transactional(readOnly = true)
     public PageResponse<List<PostResponse>> getPostsByProfileId(UUID profileId, int page, int perPage) {
-        Pageable pageable = PageRequest.of(page - 1, perPage);
+        Pageable pageable = PageRequest.of(page - 1, perPage, Sort.by(Sort.Direction.DESC, "publishedAt"));
         Page<Post> postPage = postRepository.findByProfileId(profileId, pageable);
         
         List<PostResponse> postResponses = postPage.getContent().stream()
@@ -111,7 +112,7 @@ public class PostServiceImpl implements PostService {
     @Override
     @Transactional(readOnly = true)
     public PageResponse<List<PostResponse>> getPostsByProfileIdAndPublished(UUID profileId, boolean isPublished, int page, int perPage) {
-        Pageable pageable = PageRequest.of(page - 1, perPage);
+        Pageable pageable = PageRequest.of(page - 1, perPage, Sort.by(Sort.Direction.DESC, "publishedAt"));
         Page<Post> postPage = postRepository.findByProfileIdAndIsPublished(profileId, isPublished, pageable);
         
         List<PostResponse> postResponses = postPage.getContent().stream()
@@ -127,7 +128,7 @@ public class PostServiceImpl implements PostService {
     @Override
     @Transactional(readOnly = true)
     public PageResponse<List<PostResponse>> getPostsByType(Post.PostType type, int page, int perPage) {
-        Pageable pageable = PageRequest.of(page - 1, perPage);
+        Pageable pageable = PageRequest.of(page - 1, perPage, Sort.by(Sort.Direction.DESC, "publishedAt"));
         Page<Post> postPage = postRepository.findByType(type, pageable);
         
         List<PostResponse> postResponses = postPage.getContent().stream()
@@ -143,7 +144,7 @@ public class PostServiceImpl implements PostService {
     @Override
     @Transactional(readOnly = true)
     public PageResponse<List<PostResponse>> getPostsByTypeAndPublished(Post.PostType type, boolean isPublished, int page, int perPage) {
-        Pageable pageable = PageRequest.of(page - 1, perPage);
+        Pageable pageable = PageRequest.of(page - 1, perPage, Sort.by(Sort.Direction.DESC, "publishedAt"));
         Page<Post> postPage = postRepository.findByTypeAndIsPublished(type, isPublished, pageable);
         
         List<PostResponse> postResponses = postPage.getContent().stream()
@@ -159,7 +160,7 @@ public class PostServiceImpl implements PostService {
     @Override
     @Transactional(readOnly = true)
     public PageResponse<List<PostResponse>> getPostsByTag(String tag, int page, int perPage) {
-        Pageable pageable = PageRequest.of(page - 1, perPage);
+        Pageable pageable = PageRequest.of(page - 1, perPage, Sort.by(Sort.Direction.DESC, "publishedAt"));
         Page<Post> postPage = postRepository.findByTagsContaining(tag, pageable);
         
         List<PostResponse> postResponses = postPage.getContent().stream()
