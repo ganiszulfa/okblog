@@ -1,0 +1,32 @@
+services:
+  web-production:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: okblog-web
+    container_name: okblog-web
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - HOST=0.0.0.0
+      - PORT=3000
+      - API_URL=http://localhost:8080
+    restart: unless-stopped
+    
+  # Development configuration with hot-reload
+  web:
+    image: node:20-alpine
+    container_name: okblog-web-dev
+    working_dir: /app
+    volumes:
+      - .:/app
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - HOST=0.0.0.0
+      - PORT=3000
+      - API_URL=http://localhost:80
+    command: sh -c "npm install && npm run dev"
+    restart: unless-stopped

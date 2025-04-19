@@ -1,0 +1,20 @@
+{
+  "name": "okblog-web",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "nuxt dev",
+    "build": "nuxt build",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare"
+  },
+  "dependencies": {
+    "nuxt": "^3.9.0",
+    "axios": "^1.6.2"
+  },
+  "devDependencies": {
+    "@nuxtjs/tailwindcss": "^6.10.1",
+    "postcss": "^8.4.32"
+  }
+} 
