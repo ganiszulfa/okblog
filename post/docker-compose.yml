@@ -27,6 +27,20 @@ services:
     networks:
       - okblog-network
 
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: post-phpmyadmin
+    environment:
+      - PMA_HOST=post-db
+      - PMA_PORT=3306
+      - MYSQL_ROOT_PASSWORD=root
+    ports:
+      - "8082:80"
+    depends_on:
+      - db
+    networks:
+      - okblog-network
+
 networks:
   okblog-network:
     driver: bridge

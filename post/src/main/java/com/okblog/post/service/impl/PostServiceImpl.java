@@ -7,6 +7,7 @@ import com.okblog.post.repository.PostRepository;
 import com.okblog.post.service.PostService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,15 +18,17 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class PostServiceImpl implements PostService {
 
     private final PostRepository postRepository;
     
     @Override
     @Transactional
-    public PostResponse createPost(PostRequest request) {
+    public PostResponse createPost(PostRequest request, UUID userId) {
+        log.info("X-USERID header value: {}", userId);
         Post post = Post.builder()
-                .profileId(request.getProfileId())
+                .profileId(userId)
                 .type(request.getType())
                 .title(request.getTitle())
                 .content(request.getContent())
@@ -107,7 +110,7 @@ public class PostServiceImpl implements PostService {
     public PostResponse updatePost(UUID id, PostRequest request) {
         Post post = findPostById(id);
         
-        post.setProfileId(request.getProfileId());
+        // post.setProfileId(request.getProfileId());
         post.setType(request.getType());
         post.setTitle(request.getTitle());
         post.setContent(request.getContent());

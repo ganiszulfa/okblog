@@ -5,6 +5,8 @@ WORKDIR /workspace/app
 RUN apk add --no-cache maven
 
 COPY pom.xml .
+# to speed up the build process, we cache the maven download of dependencies
+RUN mvn install -DskipTests || true
 COPY src src
 
 # Build the application

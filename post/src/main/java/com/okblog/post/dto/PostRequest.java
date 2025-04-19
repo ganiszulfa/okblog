@@ -18,9 +18,6 @@ import java.util.UUID;
 public class PostRequest {
     
     @NotNull
-    private UUID profileId;
-    
-    @NotNull
     private Post.PostType type;
     
     @NotBlank

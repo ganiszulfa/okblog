@@ -9,7 +9,7 @@ import java.util.UUID;
 
 public interface PostService {
     
-    PostResponse createPost(PostRequest request);
+    PostResponse createPost(PostRequest request, UUID userId);
     
     PostResponse getPostById(UUID id);
     
