@@ -8,6 +8,11 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:mysql://post-db:3306/okblog?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
       - SPRING_DATASOURCE_USERNAME=root
       - SPRING_DATASOURCE_PASSWORD=root
+      # Kibana logging configuration
+      - KIBANA_LOGGING_ENABLED=true
+      - ELASTICSEARCH_URL=http://host.docker.internal:9200
+      - ELASTICSEARCH_INDEX=post-service-logs
+      - SERVICE_NAME=post-service
     depends_on:
       - db
     networks:
