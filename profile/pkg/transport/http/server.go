@@ -27,17 +27,26 @@ func NewServer(svc service.Service, logger log.Logger) *Server {
 }
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// Apply logging middleware
-	handler := LoggingMiddleware(s.logger)(s.router)
+	// Apply middleware: CORS first, then logging
+	handler := LoggingMiddleware(s.logger)(CorsMiddleware()(s.router))
 	handler.ServeHTTP(w, r)
 }
 
 func (s *Server) routes() {
 	endpoints := MakeEndpoints(s.svc, s.logger)
 
+	s.router.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		EncodeResponse(context.Background(), w, "ok")
+	}).Methods(http.MethodGet, http.MethodOptions)
+
 	s.router.HandleFunc("/api/profiles/register", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost {
+		if r.Method != http.MethodPost && r.Method != http.MethodOptions {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+
+		// Skip processing for OPTIONS requests
+		if r.Method == http.MethodOptions {
 			return
 		}
 
@@ -58,11 +67,16 @@ func (s *Server) routes() {
 		}
 
 		EncodeResponse(context.Background(), w, response)
-	}).Methods(http.MethodPost)
+	}).Methods(http.MethodPost, http.MethodOptions)
 
 	s.router.HandleFunc("/api/profiles/login", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost {
+		if r.Method != http.MethodPost && r.Method != http.MethodOptions {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+
+		// Skip processing for OPTIONS requests
+		if r.Method == http.MethodOptions {
 			return
 		}
 
@@ -83,9 +97,14 @@ func (s *Server) routes() {
 		}
 
 		EncodeResponse(context.Background(), w, response)
-	}).Methods(http.MethodPost)
+	}).Methods(http.MethodPost, http.MethodOptions)
 
 	s.router.HandleFunc("/api/profiles/validate-token", func(w http.ResponseWriter, r *http.Request) {
+		// Skip processing for OPTIONS requests
+		if r.Method == http.MethodOptions {
+			return
+		}
+
 		req, err := DecodeValidateTokenRequest(context.Background(), r)
 		if err != nil {
 			// Handle Authorization header errors with 401 Unauthorized
@@ -113,9 +132,14 @@ func (s *Server) routes() {
 		}
 
 		EncodeResponse(context.Background(), w, response)
-	}).Methods(http.MethodPost, http.MethodGet, http.MethodPut, http.MethodDelete)
+	}).Methods(http.MethodPost, http.MethodGet, http.MethodPut, http.MethodDelete, http.MethodOptions)
 
 	s.router.HandleFunc("/api/profiles/{id}", func(w http.ResponseWriter, r *http.Request) {
+		// Skip processing for OPTIONS requests
+		if r.Method == http.MethodOptions {
+			return
+		}
+
 		vars := mux.Vars(r)
 		id := vars["id"]
 
@@ -164,5 +188,5 @@ func (s *Server) routes() {
 		default:
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
-	}).Methods(http.MethodGet, http.MethodPut, http.MethodDelete)
+	}).Methods(http.MethodGet, http.MethodPut, http.MethodDelete, http.MethodOptions)
 }
