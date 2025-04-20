@@ -1,0 +1,39 @@
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+}
+
+.table-container {
+  overflow-x: auto;
+}
+
+.content-editor {
+  min-height: 300px;
+}
+
+.card {
+  margin-bottom: 1.5rem;
+}
+
+.form-section {
+  margin-bottom: 2rem;
+}
+
+.is-primary-gradient {
+  background: linear-gradient(to right, #00d1b2, #209cee);
+  color: white;
+}
+
+.navbar-item.is-active {
+  background-color: #f5f5f5;
+  color: #485fc7;
+}
+
+.icon-text .icon {
+  margin-right: 0.5rem;
+}
+
+.button .icon:first-child:not(:last-child) {
+  margin-right: 0.25em;
+} 
