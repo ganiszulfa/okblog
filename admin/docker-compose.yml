@@ -11,5 +11,5 @@ services:
       - /app/node_modules
     environment:
       - NODE_ENV=production
-      - ADMIN_API_BASE_URL=http://host.docker.internal:80/api
+      - ADMIN_API_BASE_URL=http://localhost:80/api
     restart: unless-stopped 

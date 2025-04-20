@@ -1,6 +1,5 @@
 import axios from 'axios';
 
-// Get API base URL from environment variable with fallback
 const API_BASE_URL = process.env.ADMIN_API_BASE_URL || 'http://localhost:80/api';
 
 // Create axios instance with auth header

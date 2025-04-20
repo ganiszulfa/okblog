@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import authService from '../services/authService';
 
 function Login() {
   const [username, setUsername] = useState('');
@@ -8,7 +8,6 @@ function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const [loginError, setLoginError] = useState('');
   
-  const { login, error } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   
@@ -27,14 +26,16 @@ function Login() {
     setLoginError('');
     
     try {
-      const success = await login({ username, password });
-      if (success) {
-        navigate(from, { replace: true });
-      } else {
-        setLoginError('Login failed. Please check your credentials.');
-      }
+      // Use authService for login
+      const response = await authService.login(username, password);
+      
+      // Store authentication data in localStorage is handled by the authService
+      
+      // Redirect to the original page
+      navigate(from, { replace: true });
     } catch (err) {
-      setLoginError(err.message || 'An error occurred during login');
+      console.error('Login error:', err);
+      setLoginError(err.response?.data || err.message || 'An error occurred during login');
     } finally {
       setIsLoading(false);
     }
@@ -85,10 +86,10 @@ function Login() {
                   </div>
                 </div>
                 
-                {(loginError || error) && (
+                {loginError && (
                   <div className="notification is-danger">
                     <button className="delete" onClick={() => setLoginError('')}></button>
-                    {loginError || error}
+                    {loginError}
                   </div>
                 )}
                 
