@@ -105,10 +105,9 @@ public class PostController {
             @Valid @RequestBody PostRequest request,
             @RequiresUserId UUID userId) {
         // First check if the post belongs to this user
-        PageResponse<PostResponse> existingPostResponse = postService.getPostById(id);
-        PostResponse existingPost = existingPostResponse.getData();
-        if (!existingPost.getProfileId().equals(userId)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        ResponseEntity<?> ownershipCheck = checkPostOwnership(id, userId);
+        if (ownershipCheck != null) {
+            return (ResponseEntity<PageResponse<PostResponse>>) ownershipCheck;
         }
         return ResponseEntity.ok(postService.updatePost(id, request));
     }
@@ -116,10 +115,9 @@ public class PostController {
     @PutMapping("/{id}/publish")
     public ResponseEntity<PageResponse<PostResponse>> publishPost(@PathVariable UUID id, @RequiresUserId UUID userId) {
         // First check if the post belongs to this user
-        PageResponse<PostResponse> existingPostResponse = postService.getPostById(id);
-        PostResponse existingPost = existingPostResponse.getData();
-        if (!existingPost.getProfileId().equals(userId)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        ResponseEntity<?> ownershipCheck = checkPostOwnership(id, userId);
+        if (ownershipCheck != null) {
+            return (ResponseEntity<PageResponse<PostResponse>>) ownershipCheck;
         }
         return ResponseEntity.ok(postService.publishPost(id));
     }
@@ -127,10 +125,9 @@ public class PostController {
     @PutMapping("/{id}/unpublish")
     public ResponseEntity<PageResponse<PostResponse>> unpublishPost(@PathVariable UUID id, @RequiresUserId UUID userId) {
         // First check if the post belongs to this user
-        PageResponse<PostResponse> existingPostResponse = postService.getPostById(id);
-        PostResponse existingPost = existingPostResponse.getData();
-        if (!existingPost.getProfileId().equals(userId)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        ResponseEntity<?> ownershipCheck = checkPostOwnership(id, userId);
+        if (ownershipCheck != null) {
+            return (ResponseEntity<PageResponse<PostResponse>>) ownershipCheck;
         }
         return ResponseEntity.ok(postService.unpublishPost(id));
     }
@@ -138,10 +135,9 @@ public class PostController {
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletePost(@PathVariable UUID id, @RequiresUserId UUID userId) {
         // First check if the post belongs to this user
-        PageResponse<PostResponse> existingPostResponse = postService.getPostById(id);
-        PostResponse existingPost = existingPostResponse.getData();
-        if (!existingPost.getProfileId().equals(userId)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        ResponseEntity<?> ownershipCheck = checkPostOwnership(id, userId);
+        if (ownershipCheck != null) {
+            return (ResponseEntity<Void>) ownershipCheck;
         }
         postService.deletePost(id);
         return ResponseEntity.noContent().build();
@@ -151,4 +147,15 @@ public class PostController {
     public ResponseEntity<PageResponse<PostResponse>> incrementViewCount(@PathVariable UUID id) {
         return ResponseEntity.ok(postService.incrementViewCount(id));
     }
+    
+
+    private ResponseEntity<?> checkPostOwnership(UUID postId, UUID userId) {
+        PageResponse<PostResponse> existingPostResponse = postService.getPostById(postId);
+        PostResponse existingPost = existingPostResponse.getData();
+        if (!existingPost.getProfileId().equals(userId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        return null;
+    }
+    
 } 
