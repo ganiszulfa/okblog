@@ -11,7 +11,7 @@ services:
       - NODE_ENV=production
       - HOST=0.0.0.0
       - PORT=3000
-      - API_URL=http://localhost:8080
+      - API_URL=http://localhost:80
     restart: unless-stopped
     
   # Development configuration with hot-reload
