@@ -42,7 +42,7 @@ function CreatePost() {
             title: '',
             content: '',
             tags: [],
-            isPublished: false,
+            published: false,
             slug: '',
             excerpt: ''
           }}

@@ -168,8 +168,8 @@ function EditPost() {
                   <div className="level-item">
                     <div className="tags has-addons">
                       <span className="tag is-medium">Status</span>
-                      <span className={`tag is-medium ${post.isPublished ? 'is-success' : 'is-warning'}`}>
-                        {post.isPublished ? 'Published' : 'Draft'}
+                      <span className={`tag is-medium ${post.published ? 'is-success' : 'is-warning'}`}>
+                        {post.published ? 'Published' : 'Draft'}
                       </span>
                     </div>
                   </div>
@@ -177,7 +177,7 @@ function EditPost() {
                 <div className="level-right">
                   <div className="level-item">
                     <div className="buttons">
-                      {post.isPublished ? (
+                      {post.published ? (
                         <button 
                           className={`button is-warning ${saving ? 'is-loading' : ''}`}
                           onClick={handleUnpublish}

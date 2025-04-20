@@ -83,7 +83,7 @@ function Navbar() {
                 {isAuthenticated ? (
                   <>
                     <div className="navbar-item">
-                      <span className="has-text-white">Welcome, {user?.name || 'User'}</span>
+                      <span className="has-text-white">Welcome, {localStorage.getItem('user_firstName')} {localStorage.getItem('user_lastName')}</span>
                     </div>
                     <button className="button is-light" onClick={handleLogout}>
                       <span className="icon">

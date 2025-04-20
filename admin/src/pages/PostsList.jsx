@@ -56,7 +56,7 @@ function PostsList() {
 
   const handlePublishToggle = async (post) => {
     try {
-      if (post.isPublished) {
+      if (post.published) {
         await postService.unpublishPost(post.id);
       } else {
         await postService.publishPost(post.id);
@@ -267,8 +267,8 @@ function PostsList() {
                         </td>
                         <td>{post.type}</td>
                         <td>
-                          <span className={`tag ${post.isPublished ? 'is-success' : 'is-warning'}`}>
-                            {post.isPublished ? 'Published' : 'Draft'}
+                          <span className={`tag ${post.published ? 'is-success' : 'is-warning'}`}>
+                            {post.published ? 'Published' : 'Draft'}
                           </span>
                         </td>
                         <td>{formatDate(post.createdAt)}</td>
@@ -285,12 +285,12 @@ function PostsList() {
                               </span>
                             </Link>
                             <button 
-                              className={`button ${post.isPublished ? 'is-warning' : 'is-success'} is-outlined`}
-                              title={post.isPublished ? 'Unpublish' : 'Publish'}
+                              className={`button ${post.published ? 'is-warning' : 'is-success'} is-outlined`}
+                              title={post.published ? 'Unpublish' : 'Publish'}
                               onClick={() => handlePublishToggle(post)}
                             >
                               <span className="icon">
-                                <i className={`fas ${post.isPublished ? 'fa-eye-slash' : 'fa-eye'}`}></i>
+                                <i className={`fas ${post.published ? 'fa-eye-slash' : 'fa-eye'}`}></i>
                               </span>
                             </button>
                             <button 
