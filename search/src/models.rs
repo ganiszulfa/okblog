@@ -4,8 +4,10 @@ use serde::{Deserialize, Serialize};
 pub struct Post {
     pub id: String,
     pub title: String,
+    pub post_type: String,
     pub content: String,
-    pub author: Option<String>,
+    pub excerpt: String,
+    pub slug: String,
     pub created_at: Option<String>,
     pub updated_at: Option<String>,
 }

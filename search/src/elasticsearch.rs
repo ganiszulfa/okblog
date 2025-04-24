@@ -86,7 +86,9 @@ pub async fn search_posts(
                 id,
                 title: source["title"].as_str().unwrap_or("").to_string(),
                 content: source["content"].as_str().unwrap_or("").to_string(),
-                author: source["author"].as_str().map(|s| s.to_string()),
+                excerpt: source["excerpt"].as_str().unwrap_or("").to_string(),
+                slug: source["slug"].as_str().unwrap_or("").to_string(),
+                post_type: source["post_type"].as_str().unwrap_or("").to_string(),
                 created_at: source["created_at"].as_str().map(|s| s.to_string()),
                 updated_at: source["updated_at"].as_str().map(|s| s.to_string()),
             }
