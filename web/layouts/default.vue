@@ -2,15 +2,20 @@
   <div class="min-h-screen bg-gray-50">
     <!-- Navigation Header -->
     <header class="bg-white shadow-sm">
-      <div class="container mx-auto px-4 py-4 flex justify-between items-center">
-        <NuxtLink to="/" class="font-bold text-2xl text-blue-700">OKBlog</NuxtLink>
-        <nav>
-          <ul class="flex space-x-6">
-            <li>
-              <NuxtLink to="/" class="text-gray-700 hover:text-blue-600">Home</NuxtLink>
-            </li>
-          </ul>
-        </nav>
+      <div class="container mx-auto px-4 py-4">
+        <div class="flex justify-between items-center mb-4">
+          <NuxtLink to="/" class="font-bold text-2xl text-blue-700">OKBlog</NuxtLink>
+          <nav>
+            <ul class="flex space-x-6">
+              <li>
+                <NuxtLink to="/" class="text-gray-700 hover:text-blue-600">Home</NuxtLink>
+              </li>
+            </ul>
+          </nav>
+        </div>
+        <div class="max-w-md mx-auto">
+          <SearchBar />
+        </div>
       </div>
     </header>
     
