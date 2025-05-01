@@ -12,7 +12,6 @@ services:
       - HOST=0.0.0.0
       - PORT=3000
       - API_URL=http://localhost:80
-    restart: unless-stopped
     
   # Development configuration with hot-reload
   web:
@@ -21,6 +20,7 @@ services:
     working_dir: /app
     volumes:
       - .:/app
+      - /app/node_modules
     ports:
       - "3000:3000"
     environment:
@@ -28,5 +28,6 @@ services:
       - HOST=0.0.0.0
       - PORT=3000
       - API_URL=http://localhost:80
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
     command: sh -c "npm install && npm run dev"
-    restart: unless-stopped
