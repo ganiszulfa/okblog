@@ -6,7 +6,6 @@ services:
     container_name: okblog-search-service
     environment:
       - ELASTICSEARCH_URL=http://host.docker.internal:9200
-      - ELASTICSEARCH_INDEX=profile-service-logs
+      - ELASTICSEARCH_INDEX=post-db.okblog.posts
     ports:
       - "3003:3001"
-    restart: unless-stopped
