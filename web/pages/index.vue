@@ -9,7 +9,7 @@
         class="border-b border-gray-100 pb-16 last:border-b-0"
       >
         <h2 class="text-3xl font-serif text-gray-900 mb-4">
-          <NuxtLink :to="`/posts/${post.slug}`" class="hover:text-gray-700 transition-colors">
+          <NuxtLink :to="getPostUrl(post)" class="hover:text-gray-700 transition-colors">
             {{ post.title }}
           </NuxtLink>
         </h2>
@@ -30,7 +30,7 @@
         </div>
         <div class="flex justify-between items-center text-sm text-gray-500">
           <span>{{ post.viewCount }} views</span>
-          <NuxtLink :to="`/posts/${post.slug}`" class="text-gray-900 hover:text-gray-700 transition-colors">
+          <NuxtLink :to="getPostUrl(post)" class="text-gray-900 hover:text-gray-700 transition-colors">
             Read more →
           </NuxtLink>
         </div>
@@ -108,6 +108,23 @@ const currentPage = ref(parseInt(route.query.page) || 1);
 const totalItems = ref(0);
 const perPage = ref(10);
 const totalPages = ref(1);
+
+// Helper function to create the URL path with date for a post
+const getPostUrl = (post) => {
+  if (!post) return '/';
+  
+  if (!post.publishedAt) {
+    // Use default date if publishedAt is not available
+    return `/2000/01/01/${post.slug}`;
+  }
+  
+  const date = new Date(post.publishedAt);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  
+  return `/${year}/${month}/${day}/${post.slug}`;
+};
 
 const paginationRange = computed(() => {
   // Show 5 page buttons at most

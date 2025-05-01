@@ -22,7 +22,7 @@
           class="border-b border-gray-100 pb-16 last:border-b-0"
         >
           <h2 class="text-3xl font-serif text-gray-900 mb-4">
-            <NuxtLink :to="`/posts/${result.slug}`" class="hover:text-gray-700 transition-colors">
+            <NuxtLink :to="getPostUrl(result)" class="hover:text-gray-700 transition-colors">
               {{ result.title }}
             </NuxtLink>
           </h2>
@@ -50,6 +50,26 @@ const query = ref(route.query.q || '');
 const results = ref([]);
 const loading = ref(false);
 const error = ref(null);
+
+// Helper function to create the URL path with date for a post
+const getPostUrl = (post) => {
+  if (!post) return '/';
+  
+  // Use publishedAt or created_at depending on the field available
+  const dateStr = post.publishedAt || post.created_at;
+  
+  if (!dateStr) {
+    // Use default date if no date is available
+    return `/2000/01/01/${post.slug}`;
+  }
+  
+  const date = new Date(dateStr);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  
+  return `/${year}/${month}/${day}/${post.slug}`;
+};
 
 const performSearch = async () => {
   if (!query.value) return;
