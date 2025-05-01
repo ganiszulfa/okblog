@@ -16,8 +16,8 @@ pub fn search_routes(es_client: Elasticsearch) -> Router {
     let shared_client = Arc::new(es_client);
     
     Router::new()
-        .route("/health", get(health_check))
-        .route("/search", post(search_posts))
+        .route("/api/health", get(health_check))
+        .route("/api/search", post(search_posts))
         .with_state(shared_client)
 }
 
