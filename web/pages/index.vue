@@ -1,36 +1,38 @@
 <template>
-  <div class="container mx-auto px-4 py-8">
-    <h1 class="text-3xl font-bold mb-8">OKBlog</h1>
+  <div class="container mx-auto px-4 max-w-4xl">
     
     <!-- Post listing -->
-    <div v-if="posts.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div v-if="posts.length > 0" class="space-y-16">
       <article 
         v-for="post in posts" 
         :key="post.id" 
-        class="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow"
+        class="border-b border-gray-100 pb-16 last:border-b-0"
       >
-        <h2 class="text-xl font-semibold mb-3">
-          <NuxtLink :to="`/posts/${post.slug}`" class="text-blue-600 hover:text-blue-800">
+        <h2 class="text-3xl font-serif text-gray-900 mb-4">
+          <NuxtLink :to="`/posts/${post.slug}`" class="hover:text-gray-700 transition-colors">
             {{ post.title }}
           </NuxtLink>
         </h2>
-        <div class="text-sm text-gray-500 mb-3">
+        <div class="text-sm text-gray-500 mb-6">
           <span v-if="post.publishedAt">
-            {{ new Date(post.publishedAt).toLocaleDateString() }}
+            {{ new Date(post.publishedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) }}
           </span>
         </div>
-        <p class="text-gray-700 mb-4">{{ post.summary }}</p>
-        <div class="flex flex-wrap gap-2 mb-4">
+        <p class="text-lg text-gray-700 mb-6 leading-relaxed">{{ post.summary }}</p>
+        <div class="flex flex-wrap gap-2 mb-6">
           <span 
             v-for="(tag, index) in post.tags" 
             :key="index" 
-            class="bg-gray-100 px-2 py-1 text-xs rounded-full"
+            class="bg-gray-50 px-3 py-1 text-sm text-gray-600 rounded-full"
           >
             {{ tag }}
           </span>
         </div>
         <div class="flex justify-between items-center text-sm text-gray-500">
           <span>{{ post.viewCount }} views</span>
+          <NuxtLink :to="`/posts/${post.slug}`" class="text-gray-900 hover:text-gray-700 transition-colors">
+            Read more →
+          </NuxtLink>
         </div>
       </article>
     </div>
@@ -40,13 +42,13 @@
     </div>
     
     <!-- Pagination -->
-    <div v-if="totalPages > 1" class="flex justify-center mt-8">
-      <nav class="flex items-center gap-1">
+    <div v-if="totalPages > 1" class="flex justify-center mt-16">
+      <nav class="flex items-center gap-2">
         <button 
           @click="changePage(1)" 
           :disabled="currentPage === 1" 
-          class="px-3 py-1 rounded border"
-          :class="currentPage === 1 ? 'text-gray-400 border-gray-200' : 'border-gray-300 hover:bg-gray-50'"
+          class="px-4 py-2 rounded border text-gray-600"
+          :class="currentPage === 1 ? 'border-gray-200' : 'border-gray-300 hover:bg-gray-50'"
           aria-label="First page"
         >
           &laquo;
@@ -55,8 +57,8 @@
         <button 
           @click="changePage(currentPage - 1)" 
           :disabled="currentPage === 1" 
-          class="px-3 py-1 rounded border"
-          :class="currentPage === 1 ? 'text-gray-400 border-gray-200' : 'border-gray-300 hover:bg-gray-50'"
+          class="px-4 py-2 rounded border text-gray-600"
+          :class="currentPage === 1 ? 'border-gray-200' : 'border-gray-300 hover:bg-gray-50'"
         >
           Prev
         </button>
@@ -65,8 +67,8 @@
           v-for="page in paginationRange" 
           :key="page" 
           @click="changePage(page)"
-          class="px-3 py-1 rounded"
-          :class="currentPage === page ? 'bg-blue-600 text-white' : 'border border-gray-300 hover:bg-gray-50'"
+          class="px-4 py-2 rounded border"
+          :class="currentPage === page ? 'border-gray-900 bg-gray-900 text-white' : 'border-gray-300 text-gray-600 hover:bg-gray-50'"
         >
           {{ page }}
         </button>
@@ -74,8 +76,8 @@
         <button 
           @click="changePage(currentPage + 1)" 
           :disabled="currentPage === totalPages"
-          class="px-3 py-1 rounded border"
-          :class="currentPage === totalPages ? 'text-gray-400 border-gray-200' : 'border-gray-300 hover:bg-gray-50'"
+          class="px-4 py-2 rounded border text-gray-600"
+          :class="currentPage === totalPages ? 'border-gray-200' : 'border-gray-300 hover:bg-gray-50'"
         >
           Next
         </button>
@@ -83,8 +85,8 @@
         <button 
           @click="changePage(totalPages)" 
           :disabled="currentPage === totalPages" 
-          class="px-3 py-1 rounded border"
-          :class="currentPage === totalPages ? 'text-gray-400 border-gray-200' : 'border-gray-300 hover:bg-gray-50'"
+          class="px-4 py-2 rounded border text-gray-600"
+          :class="currentPage === totalPages ? 'border-gray-200' : 'border-gray-300 hover:bg-gray-50'"
           aria-label="Last page"
         >
           &raquo;

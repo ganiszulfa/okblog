@@ -1,6 +1,6 @@
 <template>
-  <div class="container mx-auto px-4 py-8">
-    <h1 class="text-3xl font-bold mb-8">Search Results</h1>
+  <div class="container mx-auto px-4 max-w-3xl">
+    <h1 class="text-5xl font-serif text-gray-900 mb-12 text-center">Search Results</h1>
     
     <div v-if="loading" class="text-center py-12">
       <p class="text-gray-500">Searching...</p>
@@ -11,25 +11,25 @@
     </div>
     
     <div v-else>
-      <p v-if="query" class="text-gray-600 mb-6">
+      <p v-if="query" class="text-lg text-gray-600 mb-12 text-center">
         Showing results for: "{{ query }}"
       </p>
       
-      <div v-if="results.length > 0" class="grid grid-cols-1 gap-6">
+      <div v-if="results.length > 0" class="space-y-16">
         <article 
           v-for="result in results" 
           :key="result.id" 
-          class="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow"
+          class="border-b border-gray-100 pb-16 last:border-b-0"
         >
-          <h2 class="text-xl font-semibold mb-3">
-            <NuxtLink :to="`/posts/${result.slug}`" class="text-blue-600 hover:text-blue-800">
+          <h2 class="text-3xl font-serif text-gray-900 mb-4">
+            <NuxtLink :to="`/posts/${result.slug}`" class="hover:text-gray-700 transition-colors">
               {{ result.title }}
             </NuxtLink>
           </h2>
-          <p class="text-gray-700 mb-4">{{ result.excerpt }}</p>
+          <p class="text-lg text-gray-700 mb-6 leading-relaxed">{{ result.excerpt }}</p>
           <div class="text-sm text-gray-500">
             <span v-if="result.created_at">
-              {{ new Date(result.created_at).toLocaleDateString() }}
+              {{ new Date(result.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) }}
             </span>
           </div>
         </article>

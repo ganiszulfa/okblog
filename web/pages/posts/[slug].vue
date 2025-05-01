@@ -1,22 +1,22 @@
 <template>
-  <div class="container mx-auto px-4 py-8 max-w-4xl">
+  <div class="container mx-auto px-4 max-w-3xl">
     <div v-if="post">
       <!-- Post Header -->
-      <header class="mb-8">
-        <h1 class="text-4xl font-bold mb-4">{{ post.title }}</h1>
+      <header class="mb-16">
+        <h1 class="text-5xl font-serif text-gray-900 mb-6">{{ post.title }}</h1>
         
-        <div class="flex items-center text-gray-500 mb-6">
-          <span v-if="post.publishedAt" class="mr-4">
+        <div class="flex items-center text-gray-500 mb-8">
+          <span v-if="post.publishedAt" class="mr-6">
             {{ formatDate(post.publishedAt) }}
           </span>
           <span>{{ post.viewCount }} views</span>
         </div>
         
-        <div class="flex flex-wrap gap-2 mb-4">
+        <div class="flex flex-wrap gap-2 mb-8">
           <span 
             v-for="(tag, index) in post.tags" 
             :key="index" 
-            class="bg-gray-100 px-3 py-1 text-sm rounded-full"
+            class="bg-gray-50 px-3 py-1 text-sm text-gray-600 rounded-full"
           >
             {{ tag }}
           </span>
@@ -24,27 +24,27 @@
       </header>
       
       <!-- Post Content -->
-      <div class="prose prose-lg max-w-none mb-12" v-html="post.content"></div>
+      <div class="prose prose-lg max-w-none mb-16" v-html="post.content"></div>
       
       <!-- Author Info -->
-      <div v-if="post.profileId" class="border-t pt-8 mt-12">
+      <div v-if="post.profileId" class="border-t border-gray-100 pt-12 mt-16">
         <div class="flex items-center">
-          <div class="mr-4">
-            <div class="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
-              <span class="text-gray-600">{{ post.authorName ? post.authorName.charAt(0) : '?' }}</span>
+          <div class="mr-6">
+            <div class="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center">
+              <span class="text-2xl text-gray-600">{{ post.authorName ? post.authorName.charAt(0) : '?' }}</span>
             </div>
           </div>
           <div>
-            <h3 class="text-lg font-medium">{{ post.authorName || 'Anonymous' }}</h3>
-            <p class="text-gray-600">{{ post.authorBio || '' }}</p>
+            <h3 class="text-xl font-serif text-gray-900">{{ post.authorName || 'Anonymous' }}</h3>
+            <p class="text-gray-600 mt-2">{{ post.authorBio || '' }}</p>
           </div>
         </div>
       </div>
       
       <!-- Navigation -->
-      <div class="mt-12">
-        <NuxtLink to="/" class="text-blue-600 hover:text-blue-800">
-          &larr; Back to all posts
+      <div class="mt-16">
+        <NuxtLink to="/" class="text-gray-900 hover:text-gray-700 transition-colors">
+          ← Back to all posts
         </NuxtLink>
       </div>
     </div>
@@ -116,23 +116,43 @@ onMounted(fetchPost);
 </script>
 
 <style>
-/* You might want to add some CSS for the post content */
+.prose {
+  @apply text-gray-700 leading-relaxed;
+}
+
+.prose h2 {
+  @apply text-3xl font-serif text-gray-900 mt-12 mb-6;
+}
+
+.prose h3 {
+  @apply text-2xl font-serif text-gray-900 mt-8 mb-4;
+}
+
+.prose p {
+  @apply mb-6;
+}
+
 .prose img {
-  max-width: 100%;
-  height: auto;
-  border-radius: 0.375rem;
+  @apply rounded-lg my-8;
 }
 
 .prose pre {
-  background-color: #f3f4f6;
-  padding: 1rem;
-  border-radius: 0.375rem;
-  overflow-x: auto;
+  @apply bg-gray-50 p-4 rounded-lg overflow-x-auto my-8;
 }
 
 .prose blockquote {
-  border-left: 4px solid #e5e7eb;
-  padding-left: 1rem;
-  font-style: italic;
+  @apply border-l-4 border-gray-200 pl-4 italic text-gray-600 my-8;
+}
+
+.prose ul, .prose ol {
+  @apply my-6 pl-6;
+}
+
+.prose li {
+  @apply mb-2;
+}
+
+.prose a {
+  @apply text-gray-900 hover:text-gray-700 transition-colors;
 }
 </style> 
