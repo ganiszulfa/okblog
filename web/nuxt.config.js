@@ -29,7 +29,9 @@ export default defineNuxtConfig({
   // Runtimeconfig (replaces env and modules config in Nuxt 2)
   runtimeConfig: {
     public: {
-      apiBase: process.env.API_URL || 'http://localhost:8080'
+      apiBase: process.env.API_URL || 'http://localhost:8080',
+      blogTitle: process.env.BLOG_TITLE || 'OKBlog',
+      blogDescription: process.env.BLOG_DESCRIPTION || 'A simple blog built with Nuxt.js'
     }
   },
 

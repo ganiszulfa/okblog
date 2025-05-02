@@ -12,6 +12,8 @@ services:
       - HOST=0.0.0.0
       - PORT=3000
       - API_URL=http://localhost:80
+      - BLOG_TITLE=OKBlog - Production
+      - BLOG_DESCRIPTION=A modern blog built with Nuxt.js microservices
     
   # Development configuration with hot-reload
   web:
@@ -30,4 +32,6 @@ services:
       - API_URL=http://localhost:80
       - CHOKIDAR_USEPOLLING=true
       - WATCHPACK_POLLING=true
+      - BLOG_TITLE=OKBlog - Development
+      - BLOG_DESCRIPTION=A modern blog for sharing your thoughts and ideas with the world
     command: sh -c "npm install && npm run dev"

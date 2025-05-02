@@ -102,6 +102,7 @@ import { ref, computed } from 'vue';
 const route = useRoute();
 const router = useRouter();
 const { $api } = useNuxtApp();
+const config = useRuntimeConfig();
 
 const posts = ref([]);
 const currentPage = ref(parseInt(route.query.page) || 1);
@@ -183,6 +184,9 @@ onMounted(() => {
 });
 
 useHead({
-  title: 'OKBlog - Home'
+  title: config.public.blogTitle,
+  meta: [
+    { name: 'description', content: config.public.blogDescription }
+  ]
 });
 </script> 
