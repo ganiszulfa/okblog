@@ -1,36 +1,41 @@
 <template>
-  <div class="min-h-screen bg-white">
+  <div class="min-h-screen bg-white dark:bg-gray-900 dark:text-white transition-colors duration-300">
     <!-- Navigation Header -->
-    <header class="border-b border-gray-100">
+    <header class="border-b border-gray-100 dark:border-gray-800">
       <div class="container mx-auto px-4 py-8">
         <div class="flex justify-between items-center">
-          <NuxtLink to="/" class="text-4xl font-serif text-gray-900 hover:text-gray-700 transition-colors">OKBlog</NuxtLink>
+          <NuxtLink to="/" class="text-4xl font-serif text-gray-900 dark:text-white hover:text-gray-700 dark:hover:text-gray-300 transition-colors">OKBlog</NuxtLink>
           
-          <!-- Burger Menu Button -->
-          <button 
-            @click="isMenuOpen = !isMenuOpen" 
-            class="p-2 rounded-lg hover:bg-gray-50 transition-colors"
-            aria-label="Toggle menu"
-          >
-            <svg 
-              class="w-6 h-6 text-gray-600" 
-              :class="{ 'hidden': isMenuOpen }" 
-              fill="none" 
-              stroke="currentColor" 
-              viewBox="0 0 24 24"
+          <div class="flex items-center space-x-2">
+            <!-- Theme Toggle -->
+            <ThemeToggle />
+            
+            <!-- Burger Menu Button -->
+            <button 
+              @click="isMenuOpen = !isMenuOpen" 
+              class="p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              aria-label="Toggle menu"
             >
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-            <svg 
-              class="w-6 h-6 text-gray-600" 
-              :class="{ 'hidden': !isMenuOpen }" 
-              fill="none" 
-              stroke="currentColor" 
-              viewBox="0 0 24 24"
-            >
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+              <svg 
+                class="w-6 h-6 text-gray-600 dark:text-gray-400" 
+                :class="{ 'hidden': isMenuOpen }" 
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+              >
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+              <svg 
+                class="w-6 h-6 text-gray-600 dark:text-gray-400" 
+                :class="{ 'hidden': !isMenuOpen }" 
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+              >
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
         </div>
 
         <!-- Menu -->
@@ -43,7 +48,7 @@
               <li>
                 <NuxtLink 
                   to="/" 
-                  class="text-gray-600 hover:text-gray-900 text-lg block py-2"
+                  class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white text-lg block py-2"
                   @click="isMenuOpen = false"
                 >
                   Home
@@ -64,12 +69,12 @@
     </main>
     
     <!-- Footer -->
-    <footer class="border-t border-gray-100 py-12">
+    <footer class="border-t border-gray-100 dark:border-gray-800 py-12">
       <div class="container mx-auto px-4">
         <div class="flex flex-col items-center text-center space-y-4">
-          <h3 class="text-xl font-serif text-gray-900">OKBlog</h3>
-          <p class="text-gray-600">A platform for sharing ideas</p>
-          <div class="text-gray-500 text-sm">
+          <h3 class="text-xl font-serif text-gray-900 dark:text-white">OKBlog</h3>
+          <p class="text-gray-600 dark:text-gray-400">A platform for sharing ideas</p>
+          <div class="text-gray-500 dark:text-gray-500 text-sm">
             &copy; {{ new Date().getFullYear() }} OKBlog. All rights reserved.
           </div>
         </div>
@@ -80,6 +85,7 @@
 
 <script setup>
 import { ref } from 'vue';
+import ThemeToggle from '../components/ThemeToggle.vue';
 
 const isMenuOpen = ref(false);
 
