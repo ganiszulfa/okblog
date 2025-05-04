@@ -86,6 +86,24 @@ public class PostServiceImpl implements PostService {
     
     @Override
     @Transactional(readOnly = true)
+    public PageResponse<PostResponse> getPostBySlug(String slug, boolean onlyPublished) {
+        Post post = postRepository.findBySlug(slug)
+                .orElseThrow(() -> new EntityNotFoundException("Post not found with slug: " + slug));
+                
+        if (onlyPublished && !post.isPublished()) {
+            throw new EntityNotFoundException("Published post not found with slug: " + slug);
+        }
+        
+        PostResponse postResponse = mapToPostResponse(post);
+        
+        return PageResponse.<PostResponse>builder()
+                .data(postResponse)
+                .pagination(buildSingleItemPagination())
+                .build();
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
     public PageResponse<List<PostResponse>> getAllPosts(int page, int perPage) {
         Pageable pageable = PageRequest.of(page - 1, perPage, Sort.by(Sort.Direction.DESC, "publishedAt"));
         Page<Post> postPage = postRepository.findAll(pageable);

@@ -33,13 +33,13 @@ public class PostController {
     }
     
     @GetMapping("/{id}")
-    public ResponseEntity<PageResponse<PostResponse>> getPostById(@PathVariable UUID id) {
+    public ResponseEntity<PageResponse<PostResponse>> getPostById(@PathVariable UUID id, @RequiresUserId UUID userId) {
         return ResponseEntity.ok(postService.getPostById(id));
     }
     
     @GetMapping("/slug/{slug}")
     public ResponseEntity<PageResponse<PostResponse>> getPostBySlug(@PathVariable String slug) {
-        return ResponseEntity.ok(postService.getPostBySlug(slug));
+        return ResponseEntity.ok(postService.getPostBySlug(slug, true));
     }
     
     @GetMapping

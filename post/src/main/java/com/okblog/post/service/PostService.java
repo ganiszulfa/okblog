@@ -16,6 +16,8 @@ public interface PostService {
     
     PageResponse<PostResponse> getPostBySlug(String slug);
     
+    PageResponse<PostResponse> getPostBySlug(String slug, boolean onlyPublished);
+    
     PageResponse<List<PostResponse>> getAllPosts(int page, int perPage);
     
     PageResponse<List<PostResponse>> getPostsByProfileId(UUID profileId, int page, int perPage);
