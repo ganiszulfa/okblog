@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import ReactQuill from 'react-quill';
+import 'quill/dist/quill.snow.css';
 
 function PostForm({ onSubmit, isLoading, initialData, isEdit = false }) {
   const [title, setTitle] = useState('');
@@ -10,6 +12,24 @@ function PostForm({ onSubmit, isLoading, initialData, isEdit = false }) {
   const [isPublished, setIsPublished] = useState(false);
   const [autoSlug, setAutoSlug] = useState(true);
   const [autoExcerpt, setAutoExcerpt] = useState(true);
+
+  // Quill editor modules and formats
+  const modules = {
+    toolbar: [
+      [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+      ['bold', 'italic', 'underline', 'strike', 'blockquote'],
+      [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+      ['link', 'image', 'code-block'],
+      ['clean']
+    ],
+  };
+  
+  const formats = [
+    'header',
+    'bold', 'italic', 'underline', 'strike', 'blockquote',
+    'list', 'bullet',
+    'link', 'image', 'code-block'
+  ];
 
   // Initialize form with data if provided
   useEffect(() => {
@@ -172,14 +192,16 @@ function PostForm({ onSubmit, isLoading, initialData, isEdit = false }) {
           <div className="field">
             <label className="label">Content</label>
             <div className="control">
-              <textarea 
-                className="textarea content-editor" 
+              <ReactQuill 
+                theme="snow"
                 value={content}
-                onChange={(e) => setContent(e.target.value)}
+                onChange={setContent}
+                modules={modules}
+                formats={formats}
                 placeholder="Write your post content here..."
-                rows="12"
-                required
-                disabled={isLoading}
+                readOnly={isLoading}
+                className="content-editor"
+                style={{ minHeight: "300px", marginBottom: "40px" }}
               />
             </div>
           </div>
