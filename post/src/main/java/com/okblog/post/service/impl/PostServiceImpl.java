@@ -203,7 +203,6 @@ public class PostServiceImpl implements PostService {
     public PageResponse<PostResponse> updatePost(UUID id, PostRequest request) {
         Post post = findPostById(id);
         
-        // post.setProfileId(request.getProfileId());
         post.setType(request.getType());
         post.setTitle(request.getTitle());
         post.setContent(request.getContent());

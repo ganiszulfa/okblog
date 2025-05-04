@@ -9,7 +9,7 @@ function PostForm({ onSubmit, isLoading, initialData, isEdit = false }) {
   const [content, setContent] = useState('');
   const [excerpt, setExcerpt] = useState('');
   const [tagsInput, setTagsInput] = useState('');
-  const [isPublished, setIsPublished] = useState(false);
+  const [published, setPublished] = useState(false);
   const [autoSlug, setAutoSlug] = useState(true);
   const [autoExcerpt, setAutoExcerpt] = useState(true);
 
@@ -40,7 +40,7 @@ function PostForm({ onSubmit, isLoading, initialData, isEdit = false }) {
       setContent(initialData.content || '');
       setExcerpt(initialData.excerpt || '');
       setTagsInput(initialData.tags ? Array.from(initialData.tags).join(', ') : '');
-      setIsPublished(initialData.isPublished || false);
+      setPublished(initialData.published || false);
       
       // Disable auto generation if we have data
       if (initialData.slug) setAutoSlug(false);
@@ -88,7 +88,7 @@ function PostForm({ onSubmit, isLoading, initialData, isEdit = false }) {
       content,
       excerpt: excerpt || undefined, // Don't send empty string
       tags: tagsArray.length > 0 ? tagsArray : undefined,
-      isPublished
+      published
     };
     
     onSubmit(postData);
@@ -241,8 +241,8 @@ function PostForm({ onSubmit, isLoading, initialData, isEdit = false }) {
               <label className="checkbox">
                 <input 
                   type="checkbox" 
-                  checked={isPublished}
-                  onChange={() => setIsPublished(!isPublished)}
+                  checked={published}
+                  onChange={() => setPublished(!published)}
                   disabled={isLoading}
                 />
                 <span className="ml-2">Publish immediately</span>
