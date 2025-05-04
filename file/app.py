@@ -9,7 +9,7 @@ from routes.file_routes import file_bp
 load_dotenv()
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 # Register blueprints
 app.register_blueprint(file_bp, url_prefix='/api')

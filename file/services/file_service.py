@@ -56,7 +56,7 @@ class FileService:
         )
         
         # Generate URL
-        url = f"{self.endpoint_url}/{self.bucket_name}/{blob_path}"
+        path = f"{self.bucket_name}/{blob_path}"
         
         # Create file metadata
         file_data = {
@@ -68,7 +68,7 @@ class FileService:
             'size': file_size,
             'created_at': datetime.utcnow().isoformat(),
             'updated_at': datetime.utcnow().isoformat(),
-            'url': url,
+            'path': path,
         }
         
         # Store metadata in a separate metadata blob
