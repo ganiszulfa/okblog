@@ -35,13 +35,21 @@ export default defineNuxtPlugin((nuxtApp) => {
     },
     
     /**
-     * Get posts by type
-     * @param {String} type - Post type
+     * Get only published posts with type "post"
      * @param {Number} page - Page number
      * @param {Number} perPage - Number of items per page
      */
-    getPostsByType(type, page = 1, perPage = 10) {
-      return instance.get(`/api/posts/type/${type}?page=${page}&per_page=${perPage}`);
+    getPublishedPosts(page = 1, perPage = 10) {
+      return instance.get(`/api/posts/type/POST/published/true?page=${page}&per_page=${perPage}`);
+    },
+    
+    /**
+     * Get only published posts with type "page"
+     * @param {Number} page - Page number
+     * @param {Number} perPage - Number of items per page
+     */
+    getPublishedPages(page = 1, perPage = 10) {
+      return instance.get(`/api/posts/type/PAGE/published/true?page=${page}&per_page=${perPage}`);
     },
     
     /**

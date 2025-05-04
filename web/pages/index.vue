@@ -160,7 +160,7 @@ const changePage = (page) => {
 
 const fetchPosts = async () => {
   try {
-    const response = await $api.posts.getPosts(currentPage.value);
+    const response = await $api.posts.getPublishedPosts(currentPage.value, perPage.value);
     console.log('API Response:', response);
     posts.value = response.data?.data || [];
     totalItems.value = response.data?.pagination?.total_items || 0;
