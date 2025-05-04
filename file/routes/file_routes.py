@@ -1,12 +1,15 @@
 from flask import Blueprint, request, jsonify
 from services.file_service import FileService
+from services.auth_service import AuthService
 from werkzeug.utils import secure_filename
 import os
 
 file_bp = Blueprint('files', __name__)
 file_service = FileService()
+auth_service = AuthService()
 
 @file_bp.route('/files', methods=['POST'])
+@auth_service.require_auth
 def upload_file():
     if 'file' not in request.files:
         return {'error': 'No file part'}, 400
@@ -25,6 +28,7 @@ def upload_file():
         return {'error': str(e)}, 500
 
 @file_bp.route('/files', methods=['GET'])
+@auth_service.require_auth
 def get_files():
     page = request.args.get('page', 1, type=int)
     limit = request.args.get('limit', 10, type=int)
@@ -42,6 +46,7 @@ def get_files():
         return {'error': str(e)}, 500
 
 @file_bp.route('/files/<file_id>', methods=['DELETE'])
+@auth_service.require_auth
 def delete_file(file_id):
     try:
         file_service.delete_file(file_id)
@@ -52,6 +57,7 @@ def delete_file(file_id):
         return {'error': str(e)}, 500
 
 @file_bp.route('/files/<file_id>', methods=['PUT'])
+@auth_service.require_auth
 def update_file(file_id):
     data = request.json
     if not data:
