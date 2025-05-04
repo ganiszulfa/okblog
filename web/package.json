@@ -11,10 +11,13 @@
   },
   "dependencies": {
     "nuxt": "^3.9.0",
-    "axios": "^1.6.2"
+    "axios": "^1.6.2",
+    "glob": "^10.3.10"
   },
   "devDependencies": {
     "@nuxtjs/tailwindcss": "^6.10.1",
-    "postcss": "^8.4.32"
+    "@tailwindcss/typography": "^0.5.10",
+    "postcss": "^8.4.32",
+    "rimraf": "^5.0.5"
   }
 } 

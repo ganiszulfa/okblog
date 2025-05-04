@@ -1,7 +1,7 @@
 <template>
   <div>
     <div v-if="loading" class="text-center py-12">
-      <p class="text-gray-500">Loading post...</p>
+      <p class="text-gray-500 dark:text-gray-400">Loading post...</p>
     </div>
     <div v-else-if="error" class="text-center py-12">
       <p class="text-red-500">{{ error }}</p>
@@ -9,9 +9,9 @@
     <div v-else-if="post" class="container mx-auto px-4 max-w-3xl">
       <!-- Post Header -->
       <header class="mb-16">
-        <h1 class="text-5xl font-serif text-gray-900 mb-6">{{ post.title }}</h1>
+        <h1 class="text-5xl font-serif text-gray-900 dark:text-white mb-6">{{ post.title }}</h1>
         
-        <div class="flex items-center text-gray-500 mb-8">
+        <div class="flex items-center text-gray-500 dark:text-gray-400 mb-8">
           <span v-if="post.publishedAt" class="mr-6">
             {{ formatDate(post.publishedAt) }}
           </span>
@@ -22,7 +22,7 @@
           <span 
             v-for="(tag, index) in post.tags" 
             :key="index" 
-            class="bg-gray-50 px-3 py-1 text-sm text-gray-600 rounded-full"
+            class="bg-gray-50 dark:bg-gray-800 px-3 py-1 text-sm text-gray-600 dark:text-gray-300 rounded-full"
           >
             {{ tag }}
           </span>
@@ -30,26 +30,26 @@
       </header>
       
       <!-- Post Content -->
-      <div class="prose prose-lg max-w-none mb-16" v-html="post.content"></div>
+      <div class="prose prose-lg dark:prose-invert max-w-none mb-16" v-html="post.content"></div>
       
       <!-- Author Info -->
-      <div v-if="post.profileId" class="border-t border-gray-100 pt-12 mt-16">
+      <div v-if="post.profileId" class="border-t border-gray-100 dark:border-gray-800 pt-12 mt-16">
         <div class="flex items-center">
           <div class="mr-6">
-            <div class="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center">
-              <span class="text-2xl text-gray-600">{{ post.authorName ? post.authorName.charAt(0) : '?' }}</span>
+            <div class="w-16 h-16 bg-gray-50 dark:bg-gray-800 rounded-full flex items-center justify-center">
+              <span class="text-2xl text-gray-600 dark:text-gray-300">{{ post.authorName ? post.authorName.charAt(0) : '?' }}</span>
             </div>
           </div>
           <div>
-            <h3 class="text-xl font-serif text-gray-900">{{ post.authorName || 'Anonymous' }}</h3>
-            <p class="text-gray-600 mt-2">{{ post.authorBio || '' }}</p>
+            <h3 class="text-xl font-serif text-gray-900 dark:text-white">{{ post.authorName || 'Anonymous' }}</h3>
+            <p class="text-gray-600 dark:text-gray-300 mt-2">{{ post.authorBio || '' }}</p>
           </div>
         </div>
       </div>
       
       <!-- Navigation -->
       <div class="mt-16">
-        <NuxtLink to="/" class="text-gray-900 hover:text-gray-700 transition-colors">
+        <NuxtLink to="/" class="text-gray-900 dark:text-white hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
           {{ post.type === 'PAGE' ? '← Back to home' : '← Back to all posts' }}
         </NuxtLink>
       </div>
@@ -197,15 +197,15 @@ onMounted(async () => {
 
 <style>
 .prose {
-  @apply text-gray-700 leading-relaxed;
+  @apply text-gray-700 dark:text-gray-300 leading-relaxed;
 }
 
 .prose h2 {
-  @apply text-3xl font-serif text-gray-900 mt-12 mb-6;
+  @apply text-3xl font-serif text-gray-900 dark:text-white mt-12 mb-6;
 }
 
 .prose h3 {
-  @apply text-2xl font-serif text-gray-900 mt-8 mb-4;
+  @apply text-2xl font-serif text-gray-900 dark:text-white mt-8 mb-4;
 }
 
 .prose p {
@@ -217,11 +217,11 @@ onMounted(async () => {
 }
 
 .prose pre {
-  @apply bg-gray-50 p-4 rounded-lg overflow-x-auto my-8;
+  @apply bg-gray-50 dark:bg-gray-800 p-4 rounded-lg overflow-x-auto my-8;
 }
 
 .prose blockquote {
-  @apply border-l-4 border-gray-200 pl-4 italic text-gray-600 my-8;
+  @apply border-l-4 border-gray-200 dark:border-gray-700 pl-4 italic text-gray-600 dark:text-gray-400 my-8;
 }
 
 .prose ul, .prose ol {
@@ -233,10 +233,10 @@ onMounted(async () => {
 }
 
 .prose a {
-  @apply text-gray-900 hover:text-gray-700 transition-colors;
+  @apply text-gray-900 dark:text-blue-400 hover:text-gray-700 dark:hover:text-blue-300 transition-colors;
 }
 
 .prose code {
-  @apply bg-gray-50 px-1.5 py-0.5 rounded text-gray-800 text-sm font-mono;
+  @apply bg-gray-50 dark:bg-gray-800 px-1.5 py-0.5 rounded text-gray-800 dark:text-gray-200 text-sm font-mono;
 }
 </style> 

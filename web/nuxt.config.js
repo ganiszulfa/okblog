@@ -3,6 +3,9 @@ export default defineNuxtConfig({
   // General settings
   ssr: true,
   
+  // Set compatibility date as recommended in the logs
+  compatibilityDate: '2024-04-03',
+  
   // App configuration (replaces head in Nuxt 2)
   app: {
     head: {
