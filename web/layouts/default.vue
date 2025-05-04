@@ -4,7 +4,7 @@
     <header class="border-b border-gray-100 dark:border-gray-800">
       <div class="container mx-auto px-4 py-8">
         <div class="flex justify-between items-center">
-          <NuxtLink to="/" class="text-4xl font-serif text-gray-900 dark:text-white hover:text-gray-700 dark:hover:text-gray-300 transition-colors">OKBlog</NuxtLink>
+          <NuxtLink to="/" class="text-4xl font-serif text-gray-900 dark:text-white hover:text-gray-700 dark:hover:text-gray-300 transition-colors">{{ config.public.blogTitle }}</NuxtLink>
           
           <div class="flex items-center space-x-2">
             <!-- Theme Toggle -->
@@ -73,8 +73,8 @@
     <footer class="border-t border-gray-100 dark:border-gray-800 py-12">
       <div class="container mx-auto px-4">
         <div class="flex flex-col items-center text-center space-y-4">
-          <h3 class="text-xl font-serif text-gray-900 dark:text-white">OKBlog</h3>
-          <p class="text-gray-600 dark:text-gray-400">A platform for sharing ideas</p>
+          <h3 class="text-xl font-serif text-gray-900 dark:text-white">{{ config.public.blogTitle }}</h3>
+          <p class="text-gray-600 dark:text-gray-400">{{ config.public.blogDescription }}</p>
           <div class="text-gray-500 dark:text-gray-500 text-sm">
             &copy; {{ new Date().getFullYear() }} OKBlog. All rights reserved.
           </div>
@@ -90,6 +90,7 @@ import ThemeToggle from '../components/ThemeToggle.vue';
 
 const isMenuOpen = ref(false);
 const pages = ref([]);
+const config = useRuntimeConfig();
 
 // Fetch published pages for the navigation menu
 onMounted(async () => {
