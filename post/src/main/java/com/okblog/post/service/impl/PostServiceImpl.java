@@ -13,12 +13,16 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 @Service
@@ -27,6 +31,9 @@ import java.util.stream.Collectors;
 public class PostServiceImpl implements PostService {
 
     private final PostRepository postRepository;
+    
+    // In-memory cache for view counts, mapping post ID to view counter
+    private final Map<UUID, AtomicInteger> viewCountCache = new ConcurrentHashMap<>();
     
     @Override
     @Transactional
@@ -240,14 +247,66 @@ public class PostServiceImpl implements PostService {
     @Transactional
     public PageResponse<PostResponse> incrementViewCount(UUID id) {
         Post post = findPostById(id);
-        post.setViewCount(post.getViewCount() + 1);
-        Post updatedPost = postRepository.save(post);
-        PostResponse postResponse = mapToPostResponse(updatedPost);
+        
+        // Get or create the atomic counter for this post
+        AtomicInteger counter = viewCountCache.computeIfAbsent(id, k -> new AtomicInteger(0));
+        
+        // Increment the counter
+        int currentCount = counter.incrementAndGet();
+        
+        // Return post with the updated view count (from cache + database)
+        PostResponse postResponse = mapToPostResponse(post);
+        // Add the count from cache that hasn't been persisted yet
+        postResponse.setViewCount(postResponse.getViewCount() + currentCount);
         
         return PageResponse.<PostResponse>builder()
                 .data(postResponse)
                 .pagination(buildSingleItemPagination())
                 .build();
+    }
+    
+    /**
+     * Flushes the cached view count for a post to the database
+     */
+    private void flushViewCount(UUID postId, Post post) {
+        AtomicInteger counter = viewCountCache.get(postId);
+        if (counter != null) {
+            int count = counter.getAndSet(0); // Reset counter
+            if (count > 0) {
+                post.setViewCount(post.getViewCount() + count);
+                postRepository.save(post);
+                log.debug("Flushed {} views for post {}", count, postId);
+            }
+        }
+    }
+    
+    /**
+     * Scheduled job to flush all view counts to the database
+     * Runs every 5 minutes
+     */
+    @Scheduled(fixedRate = 5 * 60 * 1000) 
+    @Transactional
+    public void flushAllViewCounts() {
+        log.info("Starting scheduled view count flush");
+        
+        // Make a copy of the keys to avoid concurrent modification
+        List<UUID> postIds = List.copyOf(viewCountCache.keySet());
+        
+        for (UUID postId : postIds) {
+            try {
+                Post post = postRepository.findById(postId).orElse(null);
+                if (post != null) {
+                    flushViewCount(postId, post);
+                } else {
+                    // Post was deleted, remove from cache
+                    viewCountCache.remove(postId);
+                }
+            } catch (Exception e) {
+                log.error("Error flushing view count for post {}", postId, e);
+            }
+        }
+        
+        log.info("Completed scheduled view count flush");
     }
     
     private Post findPostById(UUID id) {
