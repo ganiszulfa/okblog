@@ -45,13 +45,14 @@
         >
           <nav class="mb-6">
             <ul class="flex flex-col space-y-4">
-              <li>
+              <!-- Dynamic Pages -->
+              <li v-for="page in pages" :key="page._id">
                 <NuxtLink 
-                  to="/" 
+                  :to="`${page.slug}`" 
                   class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white text-lg block py-2"
                   @click="isMenuOpen = false"
                 >
-                  Home
+                  {{ page.title }}
                 </NuxtLink>
               </li>
             </ul>
@@ -84,10 +85,24 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import ThemeToggle from '../components/ThemeToggle.vue';
 
 const isMenuOpen = ref(false);
+const pages = ref([]);
+
+// Fetch published pages for the navigation menu
+onMounted(async () => {
+  try {
+    document.addEventListener('click', handleClickOutside);
+    const { $api } = useNuxtApp();
+    const response = await $api.posts.getPublishedPages();
+    console.log('API response:', response);
+    pages.value = response.data.data || [];
+  } catch (error) {
+    console.error('Failed to fetch pages:', error);
+  }
+});
 
 // Close menu when clicking outside
 const handleClickOutside = (event) => {
@@ -95,10 +110,6 @@ const handleClickOutside = (event) => {
     isMenuOpen.value = false;
   }
 };
-
-onMounted(() => {
-  document.addEventListener('click', handleClickOutside);
-});
 
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside);

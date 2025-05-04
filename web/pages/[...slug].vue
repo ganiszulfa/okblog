@@ -50,7 +50,7 @@
       <!-- Navigation -->
       <div class="mt-16">
         <NuxtLink to="/" class="text-gray-900 hover:text-gray-700 transition-colors">
-          ← Back to all posts
+          {{ post.type === 'PAGE' ? '← Back to home' : '← Back to all posts' }}
         </NuxtLink>
       </div>
     </div>
@@ -89,8 +89,37 @@ useHead(() => ({
 }));
 
 onMounted(async () => {
+  // If there's only one segment, assume it's a page URL
+  if (Array.isArray(pathSegments) && pathSegments.length === 1) {
+    const slug = pathSegments[0];
+    
+    try {
+      // Fetch the post by slug
+      const response = await $api.posts.getPostBySlug(slug);
+      
+      if (response.data?.data && response.data.data.type === 'PAGE') {
+        post.value = response.data.data;
+        
+        // Increment the view count
+        if (post.value && post.value.id) {
+          try {
+            await $api.posts.incrementViewCount(post.value.id);
+            console.log('View count incremented for page ID:', post.value.id);
+          } catch (e) {
+            console.error('Error incrementing view count:', e);
+          }
+        }
+        
+        loading.value = false;
+        return;
+      }
+    } catch (err) {
+      console.error('Error fetching page:', err);
+    }
+  }
+  
   // Check if URL matches the date format pattern: YYYY/MM/DD/slug
-  if (Array.isArray(pathSegments) && pathSegments.length === 4) {
+  else if (Array.isArray(pathSegments) && pathSegments.length === 4) {
     const [year, month, day, slug] = pathSegments;
     
     // Validate date segments
