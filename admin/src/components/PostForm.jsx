@@ -1,6 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import ReactQuill from 'react-quill';
 import 'quill/dist/quill.snow.css';
+import fileService from '../services/fileService';
+
+const UPLOADED_FILE_HOST = process.env.UPLOADED_FILE_HOST || 'http://localhost:4566/';
 
 function PostForm({ onSubmit, isLoading, initialData, isEdit = false }) {
   const [title, setTitle] = useState('');
@@ -12,17 +15,62 @@ function PostForm({ onSubmit, isLoading, initialData, isEdit = false }) {
   const [published, setPublished] = useState(false);
   const [autoSlug, setAutoSlug] = useState(true);
   const [autoExcerpt, setAutoExcerpt] = useState(true);
+  const [imageUploading, setImageUploading] = useState(false);
+  
+  // Create a ref for the Quill editor
+  const quillRef = useRef(null);
 
   // Quill editor modules and formats
-  const modules = {
-    toolbar: [
-      [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
-      ['bold', 'italic', 'underline', 'strike', 'blockquote'],
-      [{ 'list': 'ordered' }, { 'list': 'bullet' }],
-      ['link', 'image', 'code-block'],
-      ['clean']
-    ],
-  };
+  const modules = useMemo(() => {
+    return {
+      toolbar: {
+        container: [
+          [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+          ['bold', 'italic', 'underline', 'strike', 'blockquote'],
+          [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+          ['link', 'image', 'code-block'],
+          ['clean']
+        ],
+        handlers: {
+          image: () => {
+            // Create and click the file input
+            const input = document.createElement('input');
+            input.setAttribute('type', 'file');
+            input.setAttribute('accept', 'image/*');
+            input.click();
+
+            // Handle file selection
+            input.onchange = async () => {
+              const file = input.files[0];
+              if (!file) return;
+              
+              try {
+                setImageUploading(true);
+                
+                // Get the Quill instance
+                const editor = quillRef.current.getEditor();
+                const range = editor.getSelection(true);
+                
+                // Upload image to server
+                const response = await fileService.uploadFile(file);
+                
+                // Insert image
+                const url = `${UPLOADED_FILE_HOST}${response.data.path}`;
+                console.log(url);
+                editor.insertEmbed(range.index, 'image', url);
+                editor.setSelection(range.index + 1);
+              } catch (error) {
+                console.error('Error uploading image:', error);
+                alert('Failed to upload image. Please try again.');
+              } finally {
+                setImageUploading(false);
+              }
+            };
+          }
+        }
+      }
+    };
+  }, []);
   
   const formats = [
     'header',
@@ -106,6 +154,19 @@ function PostForm({ onSubmit, isLoading, initialData, isEdit = false }) {
 
   return (
     <form onSubmit={handleSubmit}>
+      {imageUploading && (
+        <div className="modal is-active">
+          <div className="modal-background"></div>
+          <div className="modal-content">
+            <div className="box has-text-centered">
+              <span className="icon is-large">
+                <i className="fas fa-spinner fa-pulse fa-2x"></i>
+              </span>
+              <p className="mt-3 is-size-5">Uploading image...</p>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="card">
         <div className="card-content">
           <div className="field">
@@ -199,9 +260,10 @@ function PostForm({ onSubmit, isLoading, initialData, isEdit = false }) {
                 modules={modules}
                 formats={formats}
                 placeholder="Write your post content here..."
-                readOnly={isLoading}
+                readOnly={isLoading || imageUploading}
                 className="content-editor"
                 style={{ minHeight: "300px", marginBottom: "40px" }}
+                ref={quillRef}
               />
             </div>
           </div>

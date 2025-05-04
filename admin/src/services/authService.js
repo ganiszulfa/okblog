@@ -85,6 +85,14 @@ export const getCurrentUser = () => {
 };
 
 /**
+ * Get the authentication token
+ * @returns {string|null} The authentication token or null if not authenticated
+ */
+export const getToken = () => {
+  return localStorage.getItem('auth_token');
+};
+
+/**
  * Log out the current user
  */
 export const logout = () => {
@@ -100,7 +108,8 @@ const authService = {
   login,
   logout,
   isAuthenticated,
-  getCurrentUser
+  getCurrentUser,
+  getToken
 };
 
 export default authService; 
