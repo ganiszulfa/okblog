@@ -191,23 +191,6 @@ function PostsList() {
   return (
     <section className="section">
       <div className="container">
-        <div className="level">
-          <div className="level-left">
-            <div className="level-item">
-              <h1 className="title">Manage Posts 1</h1>
-            </div>
-          </div>
-          <div className="level-right">
-            <div className="level-item">
-              <Link to="/posts/create" className="button is-primary">
-                <span className="icon">
-                  <i className="fas fa-plus"></i>
-                </span>
-                <span>New Post</span>
-              </Link>
-            </div>
-          </div>
-        </div>
 
         {error && (
           <div className="notification is-danger">
