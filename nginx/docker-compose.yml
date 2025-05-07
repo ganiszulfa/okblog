@@ -8,6 +8,7 @@ services:
       - ./api-gateway.conf:/etc/nginx/nginx.conf:ro
       - ./cors-preflight.conf:/etc/nginx/cors-preflight.conf:ro
       - ./cors-headers.conf:/etc/nginx/cors-headers.conf:ro
+      - ./cache:/data/nginx/cache
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost/health"]
       interval: 30s
