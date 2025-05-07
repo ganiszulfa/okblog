@@ -4,11 +4,16 @@ from datetime import datetime
 import json
 import boto3
 from werkzeug.utils import secure_filename
+from utils.logger import get_logger
+
+logger = get_logger(__name__)
 
 class FileService:
     def __init__(self):
         self.bucket_name = os.environ.get('S3_BUCKET_NAME')
         self.endpoint_url = os.environ.get('S3_ENDPOINT_URL', 'http://localstack:4566')
+        
+        logger.info(f"Initializing FileService with bucket: {self.bucket_name}, endpoint: {self.endpoint_url}")
         
         # Configure S3 client to use LocalStack
         self.s3 = boto3.client(
@@ -22,7 +27,9 @@ class FileService:
         # Create bucket if it doesn't exist
         try:
             self.s3.head_bucket(Bucket=self.bucket_name)
+            logger.info(f"Bucket {self.bucket_name} already exists")
         except:
+            logger.info(f"Creating bucket {self.bucket_name}")
             self.s3.create_bucket(Bucket=self.bucket_name)
     
     def upload_file(self, file_obj, name, description=''):
@@ -41,6 +48,8 @@ class FileService:
         filename = secure_filename(file_obj.filename)
         content_type = file_obj.content_type
         
+        logger.debug(f"Preparing to upload file: {filename}, content_type: {content_type}")
+        
         # Get file size before upload (which will close the file)
         file_obj.seek(0, os.SEEK_END)
         file_size = file_obj.tell()
@@ -48,6 +57,7 @@ class FileService:
         
         # Upload the file
         blob_path = f"{file_id}/{filename}"
+        logger.debug(f"Uploading file to path: {blob_path}")
         self.s3.upload_fileobj(
             file_obj,
             self.bucket_name,
@@ -73,6 +83,7 @@ class FileService:
         
         # Store metadata in a separate metadata blob
         metadata_blob_path = f"{file_id}/metadata.json"
+        logger.debug(f"Storing metadata at path: {metadata_blob_path}")
         self.s3.put_object(
             Bucket=self.bucket_name,
             Key=metadata_blob_path,
@@ -80,6 +91,7 @@ class FileService:
             ContentType='application/json'
         )
         
+        logger.info(f"File upload complete: id={file_id}, name={name}, size={file_size}")
         return file_data
     
     def get_files(self, page=1, limit=10):
@@ -93,6 +105,8 @@ class FileService:
         Returns:
             tuple: (list of files, total count)
         """
+        logger.debug(f"Listing files, page={page}, limit={limit}")
+        
         # List all objects to find directories/prefixes
         response = self.s3.list_objects_v2(
             Bucket=self.bucket_name,
@@ -113,6 +127,8 @@ class FileService:
         end_idx = start_idx + limit
         paginated_ids = file_ids[start_idx:end_idx]
         
+        logger.debug(f"Found {total} files, retrieving details for {len(paginated_ids)} files")
+        
         # Get file data for each ID
         files = []
         for file_id in paginated_ids:
@@ -124,10 +140,12 @@ class FileService:
                 )
                 metadata = json.loads(response['Body'].read().decode('utf-8'))
                 files.append(metadata)
-            except Exception:
+            except Exception as e:
                 # Skip if metadata doesn't exist
+                logger.warning(f"Failed to retrieve metadata for file {file_id}: {str(e)}")
                 continue
         
+        logger.debug(f"Retrieved {len(files)} files successfully")
         return files, total
     
     def delete_file(self, file_id):
@@ -140,11 +158,14 @@ class FileService:
         Raises:
             ValueError: If file doesn't exist
         """
+        logger.debug(f"Attempting to delete file: {file_id}")
+        
         # Check if metadata exists
         metadata_path = f"{file_id}/metadata.json"
         try:
             self.s3.head_object(Bucket=self.bucket_name, Key=metadata_path)
         except:
+            logger.warning(f"File {file_id} not found for deletion")
             raise ValueError(f"File with ID {file_id} not found")
         
         # List all objects with the file_id prefix
@@ -155,8 +176,10 @@ class FileService:
         
         # Delete all objects
         if 'Contents' in response:
+            logger.debug(f"Deleting {len(response['Contents'])} objects for file {file_id}")
             delete_keys = {'Objects': [{'Key': obj['Key']} for obj in response['Contents']]}
             self.s3.delete_objects(Bucket=self.bucket_name, Delete=delete_keys)
+            logger.info(f"File {file_id} deleted successfully")
     
     def update_file(self, file_id, data):
         """
@@ -172,6 +195,8 @@ class FileService:
         Raises:
             ValueError: If file doesn't exist
         """
+        logger.debug(f"Attempting to update file: {file_id}")
+        
         # Check if metadata exists
         metadata_path = f"{file_id}/metadata.json"
         try:
@@ -181,12 +206,14 @@ class FileService:
             )
             current_metadata = json.loads(response['Body'].read().decode('utf-8'))
         except:
+            logger.warning(f"File {file_id} not found for update")
             raise ValueError(f"File with ID {file_id} not found")
         
         # Update allowed fields
         allowed_fields = ['name', 'description']
         for field in allowed_fields:
             if field in data:
+                logger.debug(f"Updating field {field} for file {file_id}")
                 current_metadata[field] = data[field]
         
         # Update the timestamp
@@ -200,4 +227,5 @@ class FileService:
             ContentType='application/json'
         )
         
+        logger.info(f"File {file_id} updated successfully")
         return current_metadata 

@@ -9,20 +9,26 @@ services:
       - ./:/app
     environment:
       - S3_BUCKET_NAME=${S3_BUCKET_NAME:-file-bucket}
-      - S3_ENDPOINT_URL=${S3_ENDPOINT_URL:-http://localstack:4566}
+      - S3_ENDPOINT_URL=${S3_ENDPOINT_URL:-http://host.docker.internal:4566}
       - DEBUG=${DEBUG:-False}
       - PORT=8080
       - AWS_ACCESS_KEY_ID=test
       - AWS_SECRET_ACCESS_KEY=test
       - AWS_DEFAULT_REGION=us-east-1
+      - ELASTICSEARCH_HOST=${ELASTICSEARCH_HOST:-http://host.docker.internal:9200}
+      - SERVICE_NAME=${SERVICE_NAME:-file-service}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
     depends_on:
       - localstack
     entrypoint: >
       /bin/bash -c "
+        pip install --no-cache-dir -r requirements.txt
+
         if [ -f /app/scripts/init-localstack.sh ]; then
           echo 'Initializing LocalStack...'
           /app/scripts/init-localstack.sh
         fi
+        /app/scripts/kibana-setup.sh
         exec gunicorn --bind :$$PORT --workers 1 --threads 2 --timeout 0 --worker-class=gthread app:app
       "
     healthcheck:
@@ -31,8 +37,6 @@ services:
       timeout: 10s
       retries: 3
       start_period: 10s
-    networks:
-      - file-network
 
   localstack:
     image: localstack/localstack:4.3
@@ -47,9 +51,3 @@ services:
     volumes:
       - "./localstack-data:/var/lib/localstack"
       - "/var/run/docker.sock:/var/run/docker.sock"
-    networks:
-      - file-network
-
-networks:
-  file-network:
-    driver: bridge 
