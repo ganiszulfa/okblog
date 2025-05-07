@@ -42,7 +42,7 @@ func getJWTSigningKey() []byte {
 }
 
 // JWT token expiration time
-const jwtExpirationTime = 24 * time.Hour
+const jwtExpirationTime = 14 * 24 * time.Hour
 
 // JWTClaims represents the data stored in the JWT token
 type JWTClaims struct {
