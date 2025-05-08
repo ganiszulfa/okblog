@@ -1,18 +1,20 @@
 {
-  "name": "elasticsearch-sink",
+  "name": "elasticsearch-sink-connector",
   "config": {
     "connector.class": "io.confluent.connect.elasticsearch.ElasticsearchSinkConnector",
     "tasks.max": "1",
     "topics": "post-db.okblog.posts",
     "connection.url": "http://host.docker.internal:9200",
     "type.name": "_doc",
-    "key.ignore": "true",
+    "key.ignore": "false",
+    "key.converter": "org.apache.kafka.connect.storage.StringConverter",
     "schema.ignore": "true",
     "value.converter": "org.apache.kafka.connect.json.JsonConverter",
     "value.converter.schemas.enable": "true",
     "transforms": "unwrap",
     "transforms.unwrap.type": "io.debezium.transforms.ExtractNewRecordState",
     "transforms.unwrap.drop.tombstones": "false",
-    "transforms.unwrap.delete.handling.mode": "rewrite"
+    "transforms.unwrap.delete.handling.mode": "rewrite",
+    "behavior.on.null.values": "delete"
   }
-} 
+}
