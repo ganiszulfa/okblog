@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import authService from '../services/authService';
 
 function Login() {
@@ -103,6 +103,10 @@ function Login() {
                       Login
                     </button>
                   </div>
+                </div>
+                
+                <div className="has-text-centered mt-4">
+                  Don't have an account? <Link to="/register">Register now</Link>
                 </div>
               </form>
             </div>

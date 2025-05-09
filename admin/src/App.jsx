@@ -5,6 +5,7 @@ import PostsList from './pages/PostsList';
 import EditPost from './pages/EditPost';
 import CreatePost from './pages/CreatePost';
 import Login from './pages/Login';
+import Register from './pages/Register';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 
 // Protected route component
@@ -42,6 +43,10 @@ function AppContent() {
           <Route 
             path="/login" 
             element={isAuthenticated ? <Navigate to="/" replace /> : <Login />} 
+          />
+          <Route 
+            path="/register" 
+            element={isAuthenticated ? <Navigate to="/" replace /> : <Register />} 
           />
           <Route 
             path="/" 
