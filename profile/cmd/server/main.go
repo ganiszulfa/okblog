@@ -47,12 +47,15 @@ func main() {
 	}
 	defer db.Close()
 
+	// Check if we should only allow one profile
+	onlyOneProfile := getEnvBool("ONLY_ONE_PROFILE", true)
+
 	// Initialize repository
 	repo := repository.NewPostgresRepository(db, logger)
 
 	// Create service with repository and logging middleware
 	var svc service.Service
-	svc = service.NewService(repo, logger)
+	svc = service.NewService(repo, logger, onlyOneProfile)
 	svc = service.LoggingMiddleware(logger)(svc)
 
 	// Create HTTP server with the service

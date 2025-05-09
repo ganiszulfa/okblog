@@ -51,13 +51,18 @@ func (m *MockRepository) DeleteProfile(ctx context.Context, id string) error {
 	return args.Error(0)
 }
 
+func (m *MockRepository) CountProfiles(ctx context.Context) (int, error) {
+	args := m.Called(ctx)
+	return args.Int(0), args.Error(1)
+}
+
 func TestRegisterProfile(t *testing.T) {
 	// Create a mock repository
 	mockRepo := new(MockRepository)
 	// Create a noop logger
 	logger := log.NewNopLogger()
 	// Create a service with the mock repository
-	svc := NewService(mockRepo, logger)
+	svc := NewService(mockRepo, logger, false)
 
 	// Setup test data
 	req := model.RegisterProfileRequest{
@@ -101,7 +106,7 @@ func TestRegisterProfile_InvalidInput(t *testing.T) {
 	// Create a noop logger
 	logger := log.NewNopLogger()
 	// Create a service with the mock repository
-	svc := NewService(mockRepo, logger)
+	svc := NewService(mockRepo, logger, false)
 
 	// Test cases for invalid input
 	testCases := []struct {
@@ -159,7 +164,7 @@ func TestLogin(t *testing.T) {
 	// Create a noop logger
 	logger := log.NewNopLogger()
 	// Create a service with the mock repository
-	svc := NewService(mockRepo, logger)
+	svc := NewService(mockRepo, logger, false)
 
 	// Setup test data
 	username := "testuser"
@@ -217,7 +222,7 @@ func TestLogin_InvalidCredentials(t *testing.T) {
 	// Create a noop logger
 	logger := log.NewNopLogger()
 	// Create a service with the mock repository
-	svc := NewService(mockRepo, logger)
+	svc := NewService(mockRepo, logger, false)
 
 	// Setup test data
 	username := "testuser"
@@ -265,7 +270,7 @@ func TestGetProfile(t *testing.T) {
 	// Create a noop logger
 	logger := log.NewNopLogger()
 	// Create a service with the mock repository
-	svc := NewService(mockRepo, logger)
+	svc := NewService(mockRepo, logger, false)
 
 	// Create a test profile
 	id := uuid.New().String()
@@ -298,7 +303,7 @@ func TestGetProfile_NotFound(t *testing.T) {
 	// Create a noop logger
 	logger := log.NewNopLogger()
 	// Create a service with the mock repository
-	svc := NewService(mockRepo, logger)
+	svc := NewService(mockRepo, logger, false)
 
 	// Setup expectations
 	id := "non-existent-id"
@@ -320,7 +325,7 @@ func TestUpdateProfile(t *testing.T) {
 	// Create a noop logger
 	logger := log.NewNopLogger()
 	// Create a service with the mock repository
-	svc := NewService(mockRepo, logger)
+	svc := NewService(mockRepo, logger, false)
 
 	// Create a test profile
 	id := uuid.New().String()
@@ -369,7 +374,7 @@ func TestUpdateProfile_NotFound(t *testing.T) {
 	// Create a noop logger
 	logger := log.NewNopLogger()
 	// Create a service with the mock repository
-	svc := NewService(mockRepo, logger)
+	svc := NewService(mockRepo, logger, false)
 
 	// Setup expectations
 	id := "non-existent-id"
@@ -396,7 +401,7 @@ func TestDeleteProfile(t *testing.T) {
 	// Create a noop logger
 	logger := log.NewNopLogger()
 	// Create a service with the mock repository
-	svc := NewService(mockRepo, logger)
+	svc := NewService(mockRepo, logger, false)
 
 	// Setup expectations
 	id := uuid.New().String()
@@ -416,7 +421,7 @@ func TestDeleteProfile_NotFound(t *testing.T) {
 	// Create a noop logger
 	logger := log.NewNopLogger()
 	// Create a service with the mock repository
-	svc := NewService(mockRepo, logger)
+	svc := NewService(mockRepo, logger, false)
 
 	// Setup expectations
 	id := "non-existent-id"
@@ -437,7 +442,7 @@ func TestValidateToken(t *testing.T) {
 	// Create a noop logger
 	logger := log.NewNopLogger()
 	// Create a service with the mock repository
-	svc := NewService(mockRepo, logger)
+	svc := NewService(mockRepo, logger, false)
 
 	// Setup test data
 	username := "testuser"
@@ -496,7 +501,7 @@ func TestValidateToken_Invalid(t *testing.T) {
 	// Create a noop logger
 	logger := log.NewNopLogger()
 	// Create a service with the mock repository
-	svc := NewService(mockRepo, logger)
+	svc := NewService(mockRepo, logger, false)
 
 	// Test with an invalid token
 	invalidToken := "invalid.token.format"
@@ -514,4 +519,56 @@ func TestValidateToken_Invalid(t *testing.T) {
 	assert.Error(t, err)
 	assert.Equal(t, ErrInvalidInput, err)
 	assert.Nil(t, claims)
+}
+
+func TestRegisterProfile_OnlyOneProfile(t *testing.T) {
+	// Create a mock repository
+	mockRepo := new(MockRepository)
+	// Create a noop logger
+	logger := log.NewNopLogger()
+	// Create a service with onlyOneProfile set to true
+	svc := NewService(mockRepo, logger, true)
+
+	// Setup test data
+	req := model.RegisterProfileRequest{
+		Username:  "testuser",
+		Email:     "test@example.com",
+		Password:  "password123",
+		FirstName: "Test",
+		LastName:  "User",
+		Bio:       "This is a test user",
+	}
+
+	// Test case 1: No existing profiles
+	mockRepo.On("CountProfiles", mock.Anything).Return(0, nil).Once()
+	mockRepo.On("CreateProfile", mock.Anything, mock.MatchedBy(func(p model.Profile) bool {
+		return p.Username == req.Username &&
+			p.Email == req.Email &&
+			p.Password != req.Password && // Password should be hashed, not plaintext
+			len(p.Password) > 0 && // Ensure password is not empty
+			p.FirstName == req.FirstName &&
+			p.LastName == req.LastName &&
+			p.Bio == req.Bio
+	})).Return(nil).Once()
+
+	// Call the method when no profiles exist
+	profile, err := svc.RegisterProfile(context.Background(), req)
+
+	// Assertions for first call
+	assert.NoError(t, err)
+	assert.NotNil(t, profile)
+	assert.Equal(t, req.Username, profile.Username)
+
+	// Test case 2: Existing profile should prevent registration
+	mockRepo.On("CountProfiles", mock.Anything).Return(1, nil).Once()
+
+	// Call the method when a profile already exists
+	profile2, err2 := svc.RegisterProfile(context.Background(), req)
+
+	// Assertions for second call
+	assert.Error(t, err2)
+	assert.Nil(t, profile2)
+	assert.Equal(t, "registration is disabled", err2.Error())
+
+	mockRepo.AssertExpectations(t)
 }

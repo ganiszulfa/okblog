@@ -18,6 +18,7 @@ type Repository interface {
 	GetProfileByUsername(ctx context.Context, username string) (*model.Profile, error)
 	UpdateProfile(ctx context.Context, profile model.Profile) error
 	DeleteProfile(ctx context.Context, id string) error
+	CountProfiles(ctx context.Context) (int, error)
 }
 
 // PostgresRepository implements the Repository interface using PostgreSQL
@@ -184,4 +185,18 @@ func (r *PostgresRepository) DeleteProfile(ctx context.Context, id string) error
 	}
 
 	return nil
+}
+
+// CountProfiles counts the total number of profiles in the database
+func (r *PostgresRepository) CountProfiles(ctx context.Context) (int, error) {
+	query := `SELECT COUNT(*) FROM profiles`
+
+	var count int
+	err := r.db.QueryRowContext(ctx, query).Scan(&count)
+	if err != nil {
+		level.Error(r.logger).Log("msg", "Failed to count profiles", "err", err)
+		return 0, err
+	}
+
+	return count, nil
 }

@@ -64,21 +64,39 @@ type Service interface {
 
 // profileService implements the Service interface
 type profileService struct {
-	repo   repository.Repository
-	logger log.Logger
+	repo           repository.Repository
+	logger         log.Logger
+	onlyOneProfile bool
 }
 
 // NewService creates a new instance of the profile service
-func NewService(repo repository.Repository, logger log.Logger) Service {
+func NewService(repo repository.Repository, logger log.Logger, onlyOneProfile bool) Service {
 	return &profileService{
-		repo:   repo,
-		logger: logger,
+		repo:           repo,
+		logger:         logger,
+		onlyOneProfile: onlyOneProfile,
 	}
 }
 
 func (s *profileService) RegisterProfile(ctx context.Context, req model.RegisterProfileRequest) (*model.Profile, error) {
 	if req.Username == "" || req.Email == "" || req.Password == "" {
 		return nil, ErrInvalidInput
+	}
+
+	// Check if we only allow one profile
+	if s.onlyOneProfile {
+		// Count existing profiles
+		count, err := s.repo.CountProfiles(ctx)
+		if err != nil {
+			s.logger.Log("err", err, "msg", "Failed to count profiles")
+			return nil, err
+		}
+
+		// If profiles already exist, prevent registration
+		if count > 0 {
+			s.logger.Log("msg", "Registration blocked due to ONLY_ONE_PROFILE configuration")
+			return nil, errors.New("registration is disabled")
+		}
 	}
 
 	// Hash the password with bcrypt
