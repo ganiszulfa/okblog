@@ -15,6 +15,13 @@
     "transforms.unwrap.type": "io.debezium.transforms.ExtractNewRecordState",
     "transforms.unwrap.drop.tombstones": "false",
     "transforms.unwrap.delete.handling.mode": "rewrite",
-    "behavior.on.null.values": "delete"
+    "behavior.on.null.values": "delete",
+    "log.level": "DEBUG",
+    "log.connection": "true",
+    "log.connection.close": "true",
+    "log.connection.failure": "true",
+    "log.connection.success": "true",
+    "log.connection.failure.cause": "true",
+    "log.connection.failure.cause.stacktrace": "true"
   }
 }
