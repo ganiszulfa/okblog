@@ -32,7 +32,7 @@ class FileService:
             logger.info(f"Creating bucket {self.bucket_name}")
             self.s3.create_bucket(Bucket=self.bucket_name)
     
-    def upload_file(self, file_obj, name, description=''):
+    def upload_file(self, file_obj, name, description='', custom_id=None):
         """
         Upload a file to S3 (LocalStack)
         
@@ -40,11 +40,12 @@ class FileService:
             file_obj: File object from request
             name: Name for the file
             description: Optional description
+            custom_id: Optional custom ID for the file
             
         Returns:
             dict: File information
         """
-        file_id = str(uuid.uuid4())
+        file_id = custom_id if custom_id else str(uuid.uuid4())
         filename = secure_filename(file_obj.filename)
         content_type = file_obj.content_type
         

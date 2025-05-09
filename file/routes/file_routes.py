@@ -24,10 +24,11 @@ def upload_file():
     
     name = request.form.get('name', secure_filename(file.filename))
     description = request.form.get('description', '')
+    custom_id = request.form.get('custom_id')
     
     try:
         logger.info(f"Uploading file: {name}")
-        file_data = file_service.upload_file(file, name, description)
+        file_data = file_service.upload_file(file, name, description, custom_id)
         logger.info(f"Successfully uploaded file: {file_data['id']}")
         return file_data, 201
     except Exception as e:
