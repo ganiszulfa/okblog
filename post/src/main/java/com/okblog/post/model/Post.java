@@ -56,6 +56,7 @@ public class Post {
     
     private LocalDateTime publishedAt;
     
+    @Column(unique = true)
     private String slug;
     
     private String excerpt;
