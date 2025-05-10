@@ -1,7 +1,7 @@
 name: Deploy Profile Service
 
 env:
-    CONTEXT_DIR: './profile'
+    CONTEXT_DIR: './'
     IMAGE_NAME: ${{ github.repository }}/profile
     DOCKERFILE: ./Dockerfile
     CAPROVER_APP: okblog-profile
@@ -29,6 +29,7 @@ jobs:
 
         - name: Build and test
           run: |
+            cd ./profile
             go mod tidy
             go build -v ./...
 
@@ -41,7 +42,10 @@ jobs:
 
         - name: Build and Push Release to Docker Registry
           shell: bash
-          run: ./../build_and_push.sh ${{ env.DOCKERFILE }}
+          run: |
+            cp ./build_and_push.sh ./profile/
+            cd ./profile
+            ./build_and_push.sh ${{ env.DOCKERFILE }}
           
         - name: Deploy App to CapRover
           uses: caprover/deploy-from-github@d76580d79952f6841c453bb3ed37ef452b19752c
