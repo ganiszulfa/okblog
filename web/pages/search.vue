@@ -54,21 +54,7 @@ const error = ref(null);
 // Helper function to create the URL path with date for a post
 const getPostUrl = (post) => {
   if (!post) return '/';
-  
-  // Use publishedAt or created_at depending on the field available
-  const dateStr = post.publishedAt || post.created_at;
-  
-  if (!dateStr) {
-    // Use default date if no date is available
-    return `/2000/01/01/${post.slug}`;
-  }
-  
-  const date = new Date(dateStr);
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  
-  return `/${year}/${month}/${day}/${post.slug}`;
+  return `/${post.slug}`;
 };
 
 const performSearch = async () => {

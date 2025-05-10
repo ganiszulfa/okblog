@@ -113,18 +113,7 @@ const totalPages = ref(1);
 // Helper function to create the URL path with date for a post
 const getPostUrl = (post) => {
   if (!post) return '/';
-  
-  if (!post.publishedAt) {
-    // Use default date if publishedAt is not available
-    return `/2000/01/01/${post.slug}`;
-  }
-  
-  const date = new Date(post.publishedAt);
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  
-  return `/${year}/${month}/${day}/${post.slug}`;
+  return `/${post.slug}`;
 };
 
 const paginationRange = computed(() => {

@@ -89,7 +89,7 @@ useHead(() => ({
 }));
 
 onMounted(async () => {
-  // If there's only one segment, assume it's a page URL
+  // If there's only one segment, it's a post or page URL
   if (Array.isArray(pathSegments) && pathSegments.length === 1) {
     const slug = pathSegments[0];
     
@@ -97,14 +97,14 @@ onMounted(async () => {
       // Fetch the post by slug
       const response = await $api.posts.getPostBySlug(slug);
       
-      if (response.data?.data && response.data.data.type === 'PAGE') {
+      if (response.data?.data) {
         post.value = response.data.data;
         
         // Increment the view count
         if (post.value && post.value.id) {
           try {
             await $api.posts.incrementViewCount(post.value.id);
-            console.log('View count incremented for page ID:', post.value.id);
+            console.log('View count incremented for post ID:', post.value.id);
           } catch (e) {
             console.error('Error incrementing view count:', e);
           }
@@ -114,82 +114,11 @@ onMounted(async () => {
         return;
       }
     } catch (err) {
-      console.error('Error fetching page:', err);
+      console.error('Error fetching post:', err);
     }
   }
   
-  // Check if URL matches the date format pattern: YYYY/MM/DD/slug
-  else if (Array.isArray(pathSegments) && pathSegments.length === 4) {
-    const [year, month, day, slug] = pathSegments;
-    
-    // Validate date segments
-    if (
-      /^\d{4}$/.test(year) && 
-      /^\d{2}$/.test(month) && 
-      /^\d{2}$/.test(day) && 
-      month >= '01' && month <= '12' && 
-      day >= '01' && day <= '31'
-    ) {
-      try {
-        // Fetch the post by slug
-        const response = await $api.posts.getPostBySlug(slug);
-        
-        if (response.data?.data) {
-          const postData = response.data.data;
-          
-          // Special case for default date (2000/01/01)
-          if (year === '2000' && month === '01' && day === '01') {
-            // For the default date, just check if the post doesn't have publishedAt or has an invalid date
-            if (!postData.publishedAt) {
-              post.value = postData;
-              
-              // Increment the view count
-              if (post.value && post.value.id) {
-                try {
-                  await $api.posts.incrementViewCount(post.value.id);
-                  console.log('View count incremented for post ID:', post.value.id);
-                } catch (e) {
-                  console.error('Error incrementing view count:', e);
-                }
-              }
-              
-              loading.value = false;
-              return;
-            }
-          }
-          // Normal case - validate that the post's date matches the URL
-          else if (postData.publishedAt) {
-            const pubDate = new Date(postData.publishedAt);
-            const pubYear = pubDate.getFullYear().toString();
-            const pubMonth = String(pubDate.getMonth() + 1).padStart(2, '0');
-            const pubDay = String(pubDate.getDate()).padStart(2, '0');
-            
-            // If the URL date components match the post's publishedAt date, render the post
-            if (pubYear === year && pubMonth === month && pubDay === day) {
-              post.value = postData;
-              
-              // Increment the view count
-              if (post.value && post.value.id) {
-                try {
-                  await $api.posts.incrementViewCount(post.value.id);
-                  console.log('View count incremented for post ID:', post.value.id);
-                } catch (e) {
-                  console.error('Error incrementing view count:', e);
-                }
-              }
-              
-              loading.value = false;
-              return;
-            }
-          }
-        }
-      } catch (err) {
-        console.error('Error fetching post:', err);
-      }
-    }
-  }
-  
-  // If we get here, the URL pattern didn't match or post wasn't found
+  // If we get here, the post wasn't found
   error.value = 'Post not found';
   loading.value = false;
 });

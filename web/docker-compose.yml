@@ -1,19 +1,4 @@
 services:
-  web-production:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    image: okblog-web
-    container_name: okblog-web
-    ports:
-      - "3000:3000"
-    environment:
-      - NODE_ENV=production
-      - HOST=0.0.0.0
-      - PORT=3000
-      - API_URL=http://localhost:80
-      - BLOG_TITLE=OKBlog - Production
-      - BLOG_DESCRIPTION=A modern blog built with Nuxt.js microservices
     
   # Development configuration with hot-reload
   web:
