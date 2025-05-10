@@ -1,0 +1,26 @@
+services:
+  tag-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: tag-service
+    ports:
+      - "3002:3002"
+    environment:
+      - VALKEY_ADDR=valkey:6379
+      - KAFKA_BROKERS=host.docker.internal:9092
+      - KAFKA_TOPIC=post-db.okblog.posts
+      - FIBER_PORT=3002
+    depends_on:
+      - valkey
+
+  valkey:
+    image: valkey/valkey:7.2-alpine
+    container_name: valkey-cache
+    ports:
+      - "6379:6379"
+    volumes:
+      - valkey-data:/data
+
+volumes:
+  valkey-data:
