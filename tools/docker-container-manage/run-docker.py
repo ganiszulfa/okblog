@@ -13,7 +13,8 @@ def main():
         {"name": "admin service", "cmd": "docker compose -f admin/docker-compose.yml up -d"},
         {"name": "nginx service", "cmd": "docker compose -f nginx/docker-compose.yml up -d"},
         {"name": "search service", "cmd": "docker compose -f search/docker-compose.yml up -d"},
-        {"name": "profile service", "cmd": "docker compose -f profile/docker-compose.yml up -d"}
+        {"name": "profile service", "cmd": "docker compose -f profile/docker-compose.yml up -d"},
+        {"name": "tag service", "cmd": "docker compose -f tag/docker-compose.yml up -d"}
     ]
 
     # Start each service

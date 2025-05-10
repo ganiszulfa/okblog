@@ -29,7 +29,7 @@ def main():
     print("Proceeding with purge operations...")
 
     services = [
-        "profile", "search", "nginx", "admin", "post", "file", "web"
+        "profile", "search", "nginx", "admin", "post", "file", "web", "tag"
     ]
 
     # Process each service

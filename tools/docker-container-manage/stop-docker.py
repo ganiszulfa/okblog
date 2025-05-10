@@ -6,6 +6,7 @@ def main():
 
     # Define the services - stopping in reverse order from how they started
     services = [
+        {"name": "tag service", "cmd": "docker compose -f tag/docker-compose.yml stop"},
         {"name": "profile service", "cmd": "docker compose -f profile/docker-compose.yml stop"},
         {"name": "search service", "cmd": "docker compose -f search/docker-compose.yml stop"},
         {"name": "nginx service", "cmd": "docker compose -f nginx/docker-compose.yml stop"},
