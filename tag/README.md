@@ -71,4 +71,33 @@ docker-compose up
 
 - `KAFKA_BROKERS` - Comma-separated list of Kafka brokers (required)
 - `VALKEY_ADDR` - Valkey server address (default: localhost:6379)
-- `FIBER_PORT` - HTTP server port (default: 3001) 
+- `FIBER_PORT` - HTTP server port (default: 3001)
+
+## Deployment
+
+The tag service can be deployed using GitHub Actions and CapRover.
+
+### Deployment Process
+
+1. Create a new git tag following the format `tag-[version]`. Example:
+   ```bash
+   git tag tag-1.0.0
+   git push origin tag-1.0.0
+   ```
+
+2. The GitHub Action workflow will automatically:
+   - Build a Docker image from the tag service code
+   - Push the image to DockerHub with the version tag
+   - Deploy the image to CapRover
+
+### Prerequisites
+
+The following secrets must be configured in your GitHub repository:
+- `DOCKERHUB_USERNAME` - Your DockerHub username
+- `DOCKERHUB_TOKEN` - DockerHub access token
+- `CAPROVER_SERVER` - CapRover server URL
+- `CAPROVER_TAG_APP_TOKEN` - CapRover app token for the tag service
+
+### Deployment Workflow
+
+You can find the deployment workflow configuration in `.github/workflows/tag-deploy.yml`. 

@@ -199,3 +199,32 @@ This will start:
 2. Create an index pattern for "profile-service-logs*"
 3. Go to Discover to view the logs
 4. Create visualizations and dashboards as needed 
+
+## Deployment
+
+The profile service can be deployed using GitHub Actions and CapRover.
+
+### Deployment Process
+
+1. Create a new git tag following the format `profile-[version]`. Example:
+   ```bash
+   git tag profile-1.0.0
+   git push origin profile-1.0.0
+   ```
+
+2. The GitHub Action workflow will automatically:
+   - Build a Docker image from the profile service code
+   - Push the image to DockerHub with the version tag
+   - Deploy the image to CapRover
+
+### Prerequisites
+
+The following secrets must be configured in your GitHub repository:
+- `DOCKERHUB_USERNAME` - Your DockerHub username
+- `DOCKERHUB_TOKEN` - DockerHub access token
+- `CAPROVER_SERVER` - CapRover server URL
+- `CAPROVER_PROFILE_APP_TOKEN` - CapRover app token for the profile service
+
+### Deployment Workflow
+
+You can find the deployment workflow configuration in `.github/workflows/profile-deploy.yml`. 

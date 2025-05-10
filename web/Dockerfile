@@ -1,43 +1,40 @@
 # Build stage
-FROM node:20-alpine as build-stage
+FROM node:18-alpine AS builder
 
 WORKDIR /app
 
-# Copy package.json and package-lock.json
+# Copy package files
 COPY package*.json ./
 
 # Install dependencies
-RUN npm install
+RUN npm ci
 
-# Copy all project files
+# Copy source code
 COPY . .
 
-# Build the project
+# Build the application
 RUN npm run build
 
 # Production stage
-FROM node:20-alpine as production-stage
+FROM node:18-alpine
 
 WORKDIR /app
 
-# Copy package files from build stage
-COPY --from=build-stage /app/package*.json ./
+# Copy package files
+COPY package*.json ./
 
 # Install production dependencies only
-RUN npm install --only=production
+RUN npm ci --only=production
 
-# Copy build output from build stage
-COPY --from=build-stage /app/.nuxt ./.nuxt
-COPY --from=build-stage /app/static ./static
-COPY --from=build-stage /app/nuxt.config.js ./
-
-# Expose the port Nuxt.js runs on
-EXPOSE 3000
+# Copy built assets from builder stage
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/public ./public
 
 # Set environment variables
-ENV HOST=0.0.0.0
-ENV PORT=3000
 ENV NODE_ENV=production
 
-# Start the server
+# Expose port
+EXPOSE 3000
+
+# Start the application
 CMD ["npm", "start"] 
