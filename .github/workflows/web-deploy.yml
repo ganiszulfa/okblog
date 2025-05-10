@@ -38,5 +38,5 @@ jobs:
         with:
           server: ${{ secrets.CAPROVER_SERVER }}
           token: ${{ secrets.CAPROVER_WEB_APP_TOKEN }}
-          appName: okblog
+          appName: okblog-web
           imageName: ${{ secrets.DOCKERHUB_USERNAME }}/okblog:${{ env.VERSION }} 
