@@ -13,9 +13,9 @@ import urllib3
 # Set the API endpoint for file uploads
 api_url = "http://localhost:80/api/files"
 # Set the JWT token for file uploads
-jwt_token = "SET_YOUR_JWT_TOKEN_HERE"
+jwt_token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJiZmY2ZWU5Ny0zNTA1LTQ5NDYtYTY0MC0xMGE3ZDc2NDI1YjMiLCJ1c2VybmFtZSI6ImdhbmlzIiwiaXNzdWVkQXQiOiIyMDI1LTA1LTEwVDAzOjU1OjA2LjQ2NTE4NTcwM1oiLCJleHBpcmVzQXQiOiIyMDI1LTA1LTI0VDAzOjU1OjA2LjQ2NTE4NTcwM1oifQ.pKcV8sq2MM7qktb7Pe0b2xOP-3W890boyFpO8ov5Y28"
 # Set the source host
-source_host = "myhost.net"
+source_host = "http://localhost:4566"
 # Set the invalid hosts (optional)
 invalid_hosts = ["invalid-host.com", 
                  "invalid-host-2.com",

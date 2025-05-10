@@ -5,11 +5,17 @@ from datetime import datetime
 import os
 import re
 import argparse
+import hashlib
 
 # Configuration
 input_file = os.path.join(os.path.dirname(__file__), "WP_posts.json")
 output_file = os.path.join(os.path.dirname(__file__), "wp_posts_migrated.sql")
 default_profile_id = "beefbeef-beef-beef-beef-beefbeefbeef"
+file_bucket = "file-bucket"
+
+def create_uuid_from_string(val: str):
+    hex_string = hashlib.md5(val.encode("UTF-8")).hexdigest()
+    return uuid.UUID(hex=hex_string)
 
 def generate_uuid():
     """Generate a random UUID"""
@@ -42,7 +48,30 @@ def convert_youtube_links(content):
     
     return content
 
-def convert_wp_posts_to_sql(profile_id=None):
+def process_image_paths(content, files_host, file_bucket):
+    """Process image paths in content to use UUID-based paths"""
+    if content is None:
+        return ""
+        
+    # Regular expression to match image paths
+    img_pattern = r'(https?://[^/]+)?(/wp-content/uploads/[^"\']+)'
+    
+    def replace_path(match):
+        path = match.group(2)
+        # Generate UUID from path
+        img_uuid = str(create_uuid_from_string(path))
+        print(f"path: {path}, img_uuid: {img_uuid}")
+        # Get the filename
+        filename = os.path.basename(path)
+        # Create new path
+        new_path = f"{files_host}/{file_bucket}/{img_uuid}/{filename}"
+        return new_path
+    
+    # Replace all image paths
+    content = re.sub(img_pattern, replace_path, content)
+    return content
+
+def convert_wp_posts_to_sql(profile_id=None, files_host="http://localhost:4566", file_bucket="file-bucket"):
     """Convert WordPress posts from JSON to SQL INSERT statements"""
     # Use provided profile_id or fall back to default
     profile_id_to_use = profile_id or default_profile_id
@@ -61,12 +90,12 @@ def convert_wp_posts_to_sql(profile_id=None):
     # Find the posts data
     posts_data = None
     for item in data:
-        if isinstance(item, dict) and item.get("type") == "table" and item.get("name") == "WP_posts":
+        if isinstance(item, dict) and item.get("type") == "table":
             posts_data = item.get("data", [])
             break
 
     if not posts_data:
-        print("No WP_posts data found in the JSON file")
+        print("No data found in the JSON file")
         return
 
     # Generate SQL inserts
@@ -95,9 +124,10 @@ def convert_wp_posts_to_sql(profile_id=None):
         # Get title and content
         title = clean_content(post.get("post_title", ""))
         
-        # Process content to convert YouTube links to iframes
+        # Process content to convert YouTube links to iframes and image paths
         raw_content = post.get("post_content", "")
         processed_content = convert_youtube_links(raw_content)
+        processed_content = process_image_paths(processed_content, files_host, file_bucket)
         content = clean_content(processed_content)
         
         # Extract dates
@@ -108,11 +138,16 @@ def convert_wp_posts_to_sql(profile_id=None):
         is_published = "TRUE" if post.get("post_status") == "publish" else "FALSE"
         published_at = post.get("post_date", "") if is_published == "TRUE" else "NULL"
         
+        # Get tags
+        tags = post.get("tags", "")
+        if tags:
+            tags = clean_content(tags)
+        
         # Generate SQL insert
         post_id = generate_uuid()
         
-        sql = f"""INSERT INTO posts (id, profile_id, type, title, content, created_at, updated_at, is_published, published_at, slug, excerpt, view_count) 
-        VALUES (UUID_TO_BIN('{post_id}'), UUID_TO_BIN('{profile_id_to_use}'), '{post_type}', '{title}', '{content}', '{created_at}', '{updated_at}', {is_published}, {'NULL' if published_at == 'NULL' else f"'{published_at}'"}, '{slug}', NULL, 0);"""
+        sql = f"""INSERT INTO posts (id, profile_id, type, title, content, created_at, updated_at, is_published, published_at, slug, excerpt, view_count, tags) 
+        VALUES (UUID_TO_BIN('{post_id}'), UUID_TO_BIN('{profile_id_to_use}'), '{post_type}', '{title}', '{content}', '{created_at}', '{updated_at}', {is_published}, {'NULL' if published_at == 'NULL' else f"'{published_at}'"}, '{slug}', NULL, 0, '{tags}');"""
         
         sql_statements.append(sql)
     
@@ -126,9 +161,11 @@ if __name__ == "__main__":
     # Set up argument parser
     parser = argparse.ArgumentParser(description='Convert WordPress posts from JSON to SQL INSERT statements')
     parser.add_argument('--profile-id', type=str, help='Profile ID to use for the posts (default: hardcoded ID)')
+    parser.add_argument('--files-host', type=str, default="http://localhost:4566", help='Host domain for image files (default: http://localhost:4566/)')
+    parser.add_argument('--file-bucket', type=str, default="file-bucket", help='Bucket name for image files (default: file-bucket)')
     
     # Parse arguments
     args = parser.parse_args()
     
     # Run conversion with provided profile_id if available
-    convert_wp_posts_to_sql(args.profile_id)
+    convert_wp_posts_to_sql(args.profile_id, args.files_host, args.file_bucket)

@@ -153,3 +153,5 @@ dmypy.json
 .python-version
 
 localstack-data/
+nginx/cache/
+tools/migrate-from-wordpress/downloaded_images/

@@ -17,8 +17,30 @@ This tool converts WordPress posts exported in JSON format to SQL INSERT stateme
 
 ## Usage
 
-1. Place your WordPress JSON export file named `WP_posts.json` in the same directory as this script
-2. Run the script:
+1. Generate `WP_posts.json` with this query
+```sql
+SELECT 
+    p.*,
+    GROUP_CONCAT(t.name SEPARATOR ', ') AS tags
+FROM 
+    wp_posts p
+LEFT JOIN 
+    wp_term_relationships tr ON p.ID = tr.object_id
+LEFT JOIN 
+    wp_term_taxonomy tt ON tr.term_taxonomy_id = tt.term_taxonomy_id
+LEFT JOIN 
+    wp_terms t ON tt.term_id = t.term_id
+WHERE 
+    p.post_type IN ('post', 'page')
+    AND tt.taxonomy = 'post_tag'
+GROUP BY 
+    p.ID
+ORDER BY 
+    p.post_date DESC;
+```
+
+2. Place your WordPress JSON export file named `WP_posts.json` in the same directory as this script
+3. Run the script:
 
 ```bash
 python post_sql_converter.py [--profile-id PROFILE_ID]
@@ -31,7 +53,7 @@ python post_sql_converter.py [--profile-id PROFILE_ID]
 ### Example
 
 ```bash
-python post_sql_converter.py --profile-id "1a2b3c4d-5e6f-7g8h-9i0j-1k2l3m4n5o6p"
+python post_sql_converter.py --profile-id "beefbeef-beef-beef-beef-beefbeefbeef"
 ```
 
 ## Output
