@@ -16,7 +16,6 @@ import (
 	"okblog/tag/pkg/models"
 )
 
-// StartPostsConsumer initializes and starts the Kafka consumer for posts.
 func StartPostsConsumer() {
 	kafkaBrokersEnv := os.Getenv("KAFKA_BROKERS")
 	if kafkaBrokersEnv == "" {
@@ -54,6 +53,42 @@ func StartPostsConsumer() {
 			log.Printf("Error unmarshalling Debezium message: %v. Message: %s", err, string(m.Value))
 			if err := kafkaReader.CommitMessages(context.Background(), m); err != nil {
 				log.Printf("Error committing message after Debezium unmarshal error: %v", err)
+			}
+			continue
+		}
+
+		// Check if this is a delete operation
+		if debeziumMsg.Payload.Op == "d" && debeziumMsg.Payload.Before != nil {
+			// For delete operations, remove from cache
+			postID := debeziumMsg.Payload.Before.ID
+			detailsKey := config.PostDetailsPrefix + postID
+			if err := valkeyClient.Del(context.Background(), detailsKey).Err(); err != nil {
+				log.Printf("Error deleting cached post details for deleted post ID %s: %v", postID, err)
+			} else {
+				log.Printf("Successfully deleted cached post details for deleted post ID %s", postID)
+			}
+			if err := kafkaReader.CommitMessages(context.Background(), m); err != nil {
+				log.Printf("Error committing message for deleted post: %v", err)
+			}
+			continue
+		}
+
+		// Check if this is an update that unpublished a post
+		if debeziumMsg.Payload.Op == "u" &&
+			debeziumMsg.Payload.Before != nil &&
+			debeziumMsg.Payload.After != nil &&
+			debeziumMsg.Payload.Before.IsPublished &&
+			!debeziumMsg.Payload.After.IsPublished {
+			// Post was unpublished, remove from cache
+			postID := debeziumMsg.Payload.After.ID
+			detailsKey := config.PostDetailsPrefix + postID
+			if err := valkeyClient.Del(context.Background(), detailsKey).Err(); err != nil {
+				log.Printf("Error deleting cached post details for unpublished post ID %s: %v", postID, err)
+			} else {
+				log.Printf("Successfully deleted cached post details for unpublished post ID %s", postID)
+			}
+			if err := kafkaReader.CommitMessages(context.Background(), m); err != nil {
+				log.Printf("Error committing message for unpublished post: %v", err)
 			}
 			continue
 		}
@@ -184,21 +219,6 @@ func StartPostTagsConsumer() {
 			continue
 		}
 
-		// Process create ('c') and update ('u') operations.
-		// For deletes ('d'), msg.Payload.After would be nil.
-		if msg.Payload.After == nil {
-			log.Printf("No 'after' data in PostTagDebeziumMessage (Op: %s) from %s. Key: %s. Skipping.", msg.Payload.Op, config.TopicPostTags, string(m.Key))
-			if msg.Payload.Before != nil {
-				// This is a delete operation for a tag.
-				// Future enhancement: remove PostID from PostSetPrefix+msg.Payload.Before.Tag
-				log.Printf("Tag deleted: PostID %s, Tag %s. Removal from sorted set not yet implemented.", msg.Payload.Before.PostID, msg.Payload.Before.Tag)
-			}
-			if err := kafkaReader.CommitMessages(context.Background(), m); err != nil {
-				log.Printf("Error committing message on %s for op %s with no 'after' data: %v", config.TopicPostTags, msg.Payload.Op, err)
-			}
-			continue
-		}
-
 		processPostTag(msg, kafkaReader, m)
 
 	}
@@ -207,6 +227,28 @@ func StartPostTagsConsumer() {
 // Process the tag relationship by adding the post to the tag's sorted set
 func processPostTag(msg models.PostTagDebeziumMessage, kafkaReader *kafka.Reader, m kafka.Message) {
 	valkeyClient := database.GetClient()
+
+	// Delete operation - remove post from tag's sorted set
+	if msg.Payload.Op == "d" && msg.Payload.Before != nil {
+		postID := msg.Payload.Before.PostID
+		tag := msg.Payload.Before.Tag
+
+		if postID == "" || tag == "" {
+			log.Printf("Invalid post_tag relationship for deletion: PostID %s, Tag %s", postID, tag)
+		} else {
+			tagKey := config.TagPostsPrefix + tag
+			if err := valkeyClient.ZRem(context.Background(), tagKey, postID).Err(); err != nil {
+				log.Printf("Error removing post ID %s from tag %s sorted set: %v", postID, tag, err)
+			} else {
+				log.Printf("Successfully removed post ID %s from tag %s sorted set", postID, tag)
+			}
+		}
+
+		if err := kafkaReader.CommitMessages(context.Background(), m); err != nil {
+			log.Printf("Error committing message after tag deletion: %v", err)
+		}
+		return
+	}
 
 	// Extract post ID and tag from the message
 	postID := msg.Payload.After.PostID

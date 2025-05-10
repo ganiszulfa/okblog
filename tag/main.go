@@ -9,21 +9,9 @@ import (
 	"okblog/tag/pkg/consumer"
 	"okblog/tag/pkg/database"
 	"okblog/tag/pkg/handler"
-
-	"github.com/redis/go-redis/v9"
 )
 
 // Post struct is now defined in models.go
-
-var valkeyClient *redis.Client
-
-// Global constants (could also be in a dedicated config.go)
-const (
-	kafkaTopic          = "post-db.okblog.posts"
-	kafkaGroupID        = "tag-service-group"
-	valkeyPostSetPrefix = "post_" // Used by kafka_consumer and http_handler
-	// valkeyPostDetailsPrefix is now defined in valkey_client.go
-)
 
 func main() {
 	// Initialize Valkey client
