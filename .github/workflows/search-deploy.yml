@@ -2,7 +2,7 @@ name: Deploy Search Service
 
 env:
     CONTEXT_DIR: './'
-    CAPROVER_APP: okblog
+    CAPROVER_APP: okblog-search
 
 on:
   push:
