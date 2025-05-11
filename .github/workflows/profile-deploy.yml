@@ -2,10 +2,8 @@ name: Deploy Profile Service
 
 env:
     CONTEXT_DIR: './'
-    IMAGE_NAME: ${{ github.repository }}/profile
-    DOCKERFILE: ./Dockerfile
+    DOCKERFILE: ./profile/Dockerfile
     CAPROVER_APP: okblog-profile
-    DOCKER_REGISTRY: ghcr.io
 
 on:
   push:
@@ -18,9 +16,9 @@ jobs:
         steps:
         - uses: actions/checkout@v3
         - run: |
-            echo "IMAGE_NAME_WITH_REGISTRY=$DOCKER_REGISTRY/$IMAGE_NAME" >> $GITHUB_ENV
-            export IMAGE_NAME_WITH_REGISTRY=$DOCKER_REGISTRY/$IMAGE_NAME
-            echo "FULL_IMAGE_NAME=$IMAGE_NAME_WITH_REGISTRY:$GITHUB_SHA-gitsha" >> $GITHUB_ENV
+            echo "TAG_NAME=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+            echo "FULL_IMAGE_NAME=${{ secrets.DOCKERHUB_USERNAME }}/okblog:$TAG_NAME" >> $GITHUB_ENV
+            echo "FULL_IMAGE_NAME=$FULL_IMAGE_NAME"
 
         - name: Set up Go
           uses: actions/setup-go@v3
@@ -33,14 +31,13 @@ jobs:
             go mod tidy
             go build -v ./...
 
-        - name: Log in to the Container registry
+        - name: Log in to Docker Hub
           uses: docker/login-action@v2
           with:
-              registry: ${{ env.DOCKER_REGISTRY }}
-              username: ${{ github.actor }}
-              password: ${{ secrets.GITHUB_TOKEN }}
+            username: ${{ secrets.DOCKERHUB_USERNAME }}
+            password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-        - name: Build and Push Release to Docker Registry
+        - name: Build and Push Release 
           shell: bash
           run: |
             cp ./build_and_push.sh ./profile/
