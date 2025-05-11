@@ -1,13 +1,13 @@
 # Build stage
-FROM node:18-alpine AS builder
+FROM node:20-alpine AS builder
 
 WORKDIR /app
 
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm ci
+# Install dependencies and clean cache
+RUN npm ci && npm cache clean --force
 
 # Copy source code
 COPY . .
@@ -16,19 +16,18 @@ COPY . .
 RUN npm run build
 
 # Production stage
-FROM node:18-alpine
+FROM node:20-alpine
 
 WORKDIR /app
 
 # Copy package files
 COPY package*.json ./
 
-# Install production dependencies only
-RUN npm ci --only=production
+# Install production dependencies only and clean cache
+RUN npm ci --only=production && npm cache clean --force
 
-# Copy built assets from builder stage
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/public ./public
+# Copy built assets from builder stage (only what's needed)
+COPY --from=builder /app/.output ./output
 
 # Set environment variables
 ENV NODE_ENV=production
@@ -37,4 +36,4 @@ ENV NODE_ENV=production
 EXPOSE 3000
 
 # Start the application
-CMD ["npm", "start"] 
+CMD ["node", "output/server/index.mjs"] 

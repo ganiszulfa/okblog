@@ -1,0 +1,39 @@
+# Node.js dependencies
+node_modules
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+
+# Build outputs
+dist
+build
+.next
+.nuxt
+.cache
+
+# Development files
+.git
+.github
+.gitignore
+.vscode
+.idea
+*.md
+*.log
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Testing
+coverage
+.nyc_output
+__tests__
+test
+tests
+
+# Temporary files
+.DS_Store
+.tmp
+tmp
+*.swp 
