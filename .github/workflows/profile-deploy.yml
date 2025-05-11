@@ -16,8 +16,7 @@ jobs:
         steps:
         - uses: actions/checkout@v3
         - run: |
-            echo "TAG_NAME=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
-            echo "FULL_IMAGE_NAME=${{ secrets.DOCKERHUB_USERNAME }}/okblog:$TAG_NAME" >> $GITHUB_ENV
+            echo "FULL_IMAGE_NAME=${{ secrets.DOCKERHUB_USERNAME }}/okblog:${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
             echo "FULL_IMAGE_NAME=$FULL_IMAGE_NAME"
 
         - name: Set up Go
