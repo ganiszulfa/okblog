@@ -2,7 +2,6 @@ name: Deploy Profile Service
 
 env:
     CONTEXT_DIR: './'
-    DOCKERFILE: ./profile/Dockerfile
     CAPROVER_APP: okblog-profile
 
 on:
@@ -17,7 +16,6 @@ jobs:
         - uses: actions/checkout@v3
         - run: |
             echo "FULL_IMAGE_NAME=${{ secrets.DOCKERHUB_USERNAME }}/okblog:${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
-            echo "FULL_IMAGE_NAME=$FULL_IMAGE_NAME"
 
         - name: Set up Go
           uses: actions/setup-go@v3
@@ -41,7 +39,7 @@ jobs:
           run: |
             cp ./build_and_push.sh ./profile/
             cd ./profile
-            ./build_and_push.sh ${{ env.DOCKERFILE }}
+            ./build_and_push.sh
           
         - name: Deploy App to CapRover
           uses: caprover/deploy-from-github@d76580d79952f6841c453bb3ed37ef452b19752c
