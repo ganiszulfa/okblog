@@ -6,7 +6,6 @@ RUN mkdir -p src
 RUN echo 'fn main() {println!("for cache");}' > src/main.rs
 RUN cargo build --release
 COPY ./src ./src
-COPY .env .
 # The last modified attribute of main.rs needs to be updated manually,
 # otherwise cargo won't rebuild it.
 RUN touch -a -m ./src/main.rs
