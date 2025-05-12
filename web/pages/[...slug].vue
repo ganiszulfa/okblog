@@ -19,13 +19,14 @@
         </div>
         
         <div class="flex flex-wrap gap-2 mb-8">
-          <span 
+          <NuxtLink 
             v-for="(tag, index) in post.tags" 
             :key="index" 
-            class="bg-gray-50 dark:bg-gray-800 px-3 py-1 text-sm text-gray-600 dark:text-gray-300 rounded-full"
+            :to="`/tag/${tag}`"
+            class="bg-gray-50 dark:bg-gray-800 px-3 py-1 text-sm text-gray-600 dark:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
           >
             {{ tag }}
-          </span>
+          </NuxtLink>
         </div>
       </header>
       

@@ -1,5 +1,8 @@
 <template>
   <div class="container mx-auto px-4 max-w-4xl">
+    <h1 class="text-4xl font-serif text-gray-900 dark:text-white mb-8">
+      Posts tagged with <span class="text-blue-600 dark:text-blue-400">{{ tagName }}</span>
+    </h1>
     
     <!-- Post listing -->
     <div v-if="posts.length > 0" class="space-y-16">
@@ -18,7 +21,6 @@
             {{ new Date(post.publishedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) }}
           </span>
         </div>
-        <p class="text-lg text-gray-700 dark:text-gray-300 mb-6 leading-relaxed">{{ post.summary }}</p>
         <div class="flex flex-wrap gap-2 mb-6">
           <NuxtLink 
             v-for="(tag, index) in post.tags" 
@@ -39,7 +41,7 @@
     </div>
     
     <div v-else class="text-center py-12">
-      <p class="text-gray-500 dark:text-gray-400">No posts found</p>
+      <p class="text-gray-500 dark:text-gray-400">No posts found with this tag</p>
     </div>
     
     <!-- Pagination -->
@@ -102,16 +104,18 @@ import { ref, computed } from 'vue';
 
 const route = useRoute();
 const router = useRouter();
-const { $api } = useNuxtApp();
 const config = useRuntimeConfig();
 
+const tagName = computed(() => route.params.tagName);
 const posts = ref([]);
 const currentPage = ref(parseInt(route.query.page) || 1);
 const totalItems = ref(0);
 const perPage = ref(10);
 const totalPages = ref(1);
+const loading = ref(true);
+const error = ref(null);
 
-// Helper function to create the URL path with date for a post
+// Helper function to create the URL path for a post
 const getPostUrl = (post) => {
   if (!post) return '/';
   return `/${post.slug}`;
@@ -141,7 +145,8 @@ const changePage = (page) => {
   if (page < 1 || page > totalPages.value) return;
   
   router.push({
-    query: { ...route.query, page: page === 1 ? undefined : page }
+    path: `/tag/${tagName.value}`,
+    query: { page: page === 1 ? undefined : page }
   });
   
   currentPage.value = page;
@@ -149,23 +154,31 @@ const changePage = (page) => {
 };
 
 const fetchPosts = async () => {
+  loading.value = true;
+  error.value = null;
+  
   try {
-    const response = await $api.posts.getPublishedPosts(currentPage.value, perPage.value);
-    console.log('API Response:', response);
-    posts.value = response.data?.data || [];
-    totalItems.value = response.data?.pagination?.total_items || 0;
-    perPage.value = response.data?.pagination?.per_page || 10;
-    totalPages.value = response.data?.pagination?.total_pages || 1;
+    const response = await fetch(`/api/tag/${tagName.value}?page=${currentPage.value}&per_page=${perPage.value}`);
     
-    console.log('Total items:', totalItems.value);
-    console.log('Per page:', perPage.value);
-    console.log('Total pages from API:', totalPages.value);
-  } catch (error) {
-    console.error('Error fetching posts:', error);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch posts: ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    
+    posts.value = data.data || [];
+    totalItems.value = data.pagination?.total_items || 0;
+    perPage.value = data.pagination?.per_page || 10;
+    totalPages.value = data.pagination?.total_pages || 1;
+  } catch (err) {
+    console.error('Error fetching tagged posts:', err);
+    error.value = err.message || 'Failed to load posts';
     posts.value = [];
     totalItems.value = 0;
     perPage.value = 10;
     totalPages.value = 1;
+  } finally {
+    loading.value = false;
   }
 };
 
@@ -173,10 +186,19 @@ onMounted(() => {
   fetchPosts();
 });
 
+// Refetch when tag name changes
+watch(() => route.params.tagName, () => {
+  currentPage.value = 1;
+  fetchPosts();
+});
+
 useHead({
-  title: config.public.blogTitle,
+  title: computed(() => `Posts tagged with ${tagName.value} | ${config.public.blogTitle}`),
   meta: [
-    { name: 'description', content: config.public.blogDescription }
+    { 
+      name: 'description', 
+      content: computed(() => `Browse all posts tagged with ${tagName.value}`) 
+    }
   ]
 });
 </script> 
