@@ -157,3 +157,4 @@ tools/migrate-from-wordpress/downloaded_images/
 tools/migrate-from-wordpress/*.sql
 tools/migrate-from-wordpress/*.json
 tools/migrate-from-wordpress/error_log.txt
+nginx/nginx-caprover-deployment.tar
