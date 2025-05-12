@@ -39,6 +39,6 @@ COPY . .
 ENV PORT=8080
 
 # Make the init script executable
-RUN if [ -f /app/scripts/init-localstack.sh ]; then chmod +x /app/scripts/init-localstack.sh; fi
+RUN if [ -f /app/scripts/init-minio.sh ]; then chmod +x /app/scripts/init-minio.sh; fi
 
 CMD exec gunicorn --bind :$PORT --workers 1 --threads 2 --timeout 0 --worker-class=gthread app:app 

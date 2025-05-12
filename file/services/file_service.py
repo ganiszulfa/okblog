@@ -11,17 +11,17 @@ logger = get_logger(__name__)
 class FileService:
     def __init__(self):
         self.bucket_name = os.environ.get('S3_BUCKET_NAME')
-        self.endpoint_url = os.environ.get('S3_ENDPOINT_URL', 'http://localstack:4566')
+        self.endpoint_url = os.environ.get('S3_ENDPOINT_URL', 'http://minio:9000')
         
         logger.info(f"Initializing FileService with bucket: {self.bucket_name}, endpoint: {self.endpoint_url}")
         
-        # Configure S3 client to use LocalStack
+        # Configure S3 client 
         self.s3 = boto3.client(
             's3',
             endpoint_url=self.endpoint_url,
-            aws_access_key_id='test',
-            aws_secret_access_key='test',
-            region_name='us-east-1'
+            aws_access_key_id=os.environ.get('AWS_ACCESS_KEY_ID', 'minioadmin'),
+            aws_secret_access_key=os.environ.get('AWS_SECRET_ACCESS_KEY', 'minioadmin'),
+            region_name=os.environ.get('AWS_DEFAULT_REGION', 'us-east-1')
         )
         
         # Create bucket if it doesn't exist

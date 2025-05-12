@@ -13,7 +13,7 @@ A Flask-based file upload service that stores files in Amazon S3-compatible stor
 ## Requirements
 
 - Python 3.7+
-- LocalStack or AWS S3 account
+- MinIO or AWS S3 account
 - Flask
 
 ## Installation
@@ -26,7 +26,7 @@ A Flask-based file upload service that stores files in Amazon S3-compatible stor
 3. Create a `.env` file based on `env.example`:
    ```
    S3_BUCKET_NAME=file-bucket
-   S3_ENDPOINT_URL=http://localstack:4566
+   S3_ENDPOINT_URL=http://minio:9000
    DEBUG=False
    PORT=5000
    ```
@@ -106,7 +106,7 @@ A docker-compose.yml file is provided for easier deployment:
 This will:
 - Build the Docker image
 - Configure environment variables
-- Start LocalStack for S3 storage
+- Start MinIO for S3 storage
 - Expose the service on port 5000
 
 To stop the service:
@@ -114,24 +114,11 @@ To stop the service:
 docker-compose down
 ```
 
-## AWS Deployment
+## MinIO Setup
 
-To deploy to AWS:
+This service uses MinIO for S3 storage in development. The setup includes:
 
-```bash
-# Build and push the Docker image to ECR
-aws ecr get-login-password --region your-region | docker login --username AWS --password-stdin your-account-id.dkr.ecr.your-region.amazonaws.com
-docker build -t your-account-id.dkr.ecr.your-region.amazonaws.com/file-upload-service:latest .
-docker push your-account-id.dkr.ecr.your-region.amazonaws.com/file-upload-service:latest
-
-# Deploy to ECS or other AWS service as needed
-```
-
-## LocalStack Setup
-
-This service uses LocalStack for S3 storage in development. The setup includes:
-
-1. A LocalStack container that simulates AWS S3 locally
+1. A MinIO container that provides S3-compatible storage locally
 2. Automatic bucket creation through the initialization script
 3. Configuration to make uploaded files accessible via URL
 
@@ -141,28 +128,32 @@ Create a `.env` file based on the `.env.example`:
 
 ```
 S3_BUCKET_NAME=file-bucket
-S3_ENDPOINT_URL=http://localstack:4566
+S3_ENDPOINT_URL=http://minio:9000
 DEBUG=False
 PORT=5000
 ```
 
 ### Running with Docker Compose
 
-To start the service with LocalStack:
+To start the service with MinIO:
 
 ```bash
 docker-compose up
 ```
 
 This will:
-1. Start the LocalStack container
+1. Start the MinIO container
 2. Start the file service container
-3. Initialize the S3 bucket in LocalStack
+3. Initialize the S3 bucket in MinIO
 4. Make the API available at http://localhost:5000/api
 
 ### Accessing the Storage
 
 Files are stored in the S3 bucket and can be accessed via the URL returned in the API response.
+
+The MinIO console is available at http://localhost:9001 with the default credentials:
+- Username: minioadmin
+- Password: minioadmin
 
 ### Testing the Service
 
@@ -172,10 +163,10 @@ You can test file uploads using:
 curl -F "file=@/path/to/your/file.txt" -F "name=My File" http://localhost:5000/api/files
 ```
 
-### Inspecting LocalStack
+### Inspecting MinIO
 
-You can interact with the LocalStack S3 directly using AWS CLI with the `--endpoint-url` parameter:
+You can interact with the MinIO S3 directly using AWS CLI with the `--endpoint-url` parameter:
 
 ```bash
-docker exec -it file-service aws --endpoint-url=http://localstack:4566 s3 ls s3://file-bucket
+docker exec -it file-service aws --endpoint-url=http://minio:9000 s3 ls s3://file-bucket
 ``` 

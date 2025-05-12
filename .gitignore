@@ -151,7 +151,7 @@ dmypy.json
 .pytype/
 .python-version
 
-localstack-data/
+minio-data/
 nginx/cache/
 tools/migrate-from-wordpress/downloaded_images/
 tools/migrate-from-wordpress/*.sql
