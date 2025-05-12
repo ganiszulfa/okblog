@@ -10,6 +10,11 @@ file_service = FileService()
 auth_service = AuthService()
 logger = get_logger(__name__)
 
+@file_bp.route('/files/health', methods=['GET'])
+def health():
+    logger.info("Health check")
+    return {'status': 'ok'}, 200
+
 @file_bp.route('/files', methods=['POST'])
 @auth_service.require_auth
 def upload_file():
