@@ -19,6 +19,12 @@ func main() {
 		log.Fatalf("Failed to initialize Valkey client: %v", err)
 	}
 
+	// Initialize MySQL database connection
+	if err := database.InitMySQLDB(); err != nil {
+		log.Fatalf("Failed to initialize MySQL database: %v", err)
+	}
+	defer database.CloseMySQLDB()
+
 	// Initialize Fiber app
 	app := handler.InitFiberApp()
 

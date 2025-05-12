@@ -8,6 +8,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/redis/go-redis/v9"
@@ -27,6 +28,7 @@ func InitFiberApp() *fiber.App {
 
 	api := app.Group("/api")
 	api.Get("/tag/:tagName", getPostsByTagHandler)
+	api.Post("/tag/collect", collectTagsHandler)
 
 	return app
 }
@@ -152,6 +154,156 @@ func getPostsByTagHandler(c *fiber.Ctx) error {
 			NextPage:    nextPage,
 			PrevPage:    prevPage,
 		},
+	})
+}
+
+// collectTagsHandler collects tags from published posts and creates sorted set caches
+func collectTagsHandler(c *fiber.Ctx) error {
+	ctx := context.Background()
+
+	// Connect to MySQL database
+	db := database.GetMySQLDB()
+
+	// Get Valkey client
+	valkeyClient := database.GetClient()
+
+	// Query to get all distinct tags from post_tags table joined with published posts
+	rows, err := db.Query("SELECT DISTINCT tag FROM post_tags pt JOIN posts p ON pt.post_id = p.id WHERE p.is_published = TRUE AND pt.tag IS NOT NULL AND pt.tag != ''")
+	if err != nil {
+		log.Printf("Error querying tags from database: %v", err)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to query tags from database",
+		})
+	}
+	defer rows.Close()
+
+	// Collect all tags
+	allTags := make(map[string]bool)
+	for rows.Next() {
+		var tag string
+		if err := rows.Scan(&tag); err != nil {
+			log.Printf("Error scanning tag row: %v", err)
+			continue
+		}
+
+		tag = strings.TrimSpace(tag)
+		if tag != "" {
+			allTags[tag] = true
+		}
+	}
+
+	if err := rows.Err(); err != nil {
+		log.Printf("Error iterating tag rows: %v", err)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Error processing tags",
+		})
+	}
+
+	// Check which tags need cache creation (up to 4)
+	tagsToProcess := make([]string, 0, 4)
+	for tag := range allTags {
+		// Check if sorted set exists
+		setName := config.TagPostsPrefix + tag
+		exists, err := valkeyClient.Exists(ctx, setName).Result()
+		if err != nil {
+			log.Printf("Error checking if sorted set exists for tag %s: %v", tag, err)
+			continue
+		}
+
+		if exists == 0 {
+			tagsToProcess = append(tagsToProcess, tag)
+			// Break if we have 4 tags to process
+			if len(tagsToProcess) >= 4 {
+				break
+			}
+		}
+	}
+
+	if len(tagsToProcess) == 0 {
+		return c.Status(fiber.StatusOK).JSON(fiber.Map{
+			"message":        "No new tags to process",
+			"processed_tags": []string{},
+		})
+	}
+
+	// Create a response map for processed tags and their counts
+	responseData := make(map[string]int)
+
+	// Process each tag that needs a cache
+	for _, tag := range tagsToProcess {
+		// Query posts for this tag using a JOIN between posts and post_tags
+		query := "SELECT BIN_TO_UUID(p.id) as id, p.title, p.published_at, p.slug, p.view_count " +
+			"FROM posts p " +
+			"JOIN post_tags pt ON p.id = pt.post_id " +
+			"WHERE p.is_published = TRUE AND pt.tag = ? " +
+			"ORDER BY p.published_at DESC LIMIT 100"
+
+		postRows, err := db.Query(query, tag)
+		if err != nil {
+			log.Printf("Error querying posts for tag %s: %v", tag, err)
+			continue
+		}
+
+		setName := config.TagPostsPrefix + tag
+		postsAdded := 0
+
+		// Process posts for this tag
+		for postRows.Next() {
+			var (
+				id          string
+				title       string
+				publishedAt time.Time
+				slug        string
+				viewCount   int
+			)
+
+			if err := postRows.Scan(&id, &title, &publishedAt, &slug, &viewCount); err != nil {
+				log.Printf("Error scanning post row: %v", err)
+				continue
+			}
+
+			// Create CachedPostDetails object
+			postDetails := models.CachedPostDetails{
+				Title:       title,
+				PublishedAt: publishedAt,
+				// Tags:        []string{tag}, // TODO: Add tags to the cache
+				Slug:      slug,
+				ViewCount: viewCount,
+			}
+
+			// Convert to JSON
+			postJSON, err := json.Marshal(postDetails)
+			if err != nil {
+				log.Printf("Error marshalling post details: %v", err)
+				continue
+			}
+
+			// Store post details in cache
+			detailsKey := config.PostDetailsPrefix + id
+			if err := valkeyClient.Set(ctx, detailsKey, string(postJSON), 0).Err(); err != nil {
+				log.Printf("Error setting post details in cache: %v", err)
+				continue
+			}
+
+			// Add to sorted set with published_at as score
+			score := float64(publishedAt.Unix())
+			if err := valkeyClient.ZAdd(ctx, setName, redis.Z{Score: score, Member: id}).Err(); err != nil {
+				log.Printf("Error adding post to sorted set: %v", err)
+				continue
+			}
+
+			postsAdded++
+		}
+
+		postRows.Close()
+
+		// Record the number of posts added for this tag
+		responseData[tag] = postsAdded
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message":        "Tags processed successfully",
+		"processed_tags": responseData,
 	})
 }
 

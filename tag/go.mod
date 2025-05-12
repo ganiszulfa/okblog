@@ -3,6 +3,7 @@ module okblog/tag
 go 1.24.2
 
 require (
+	github.com/go-sql-driver/mysql v1.8.0
 	github.com/gofiber/fiber/v2 v2.52.5
 	github.com/redis/go-redis/v9 v9.8.0
 	github.com/segmentio/kafka-go v0.4.47
