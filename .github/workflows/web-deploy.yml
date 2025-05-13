@@ -3,7 +3,7 @@ name: Deploy Web Service
 env:
     CONTEXT_DIR: './'
     CAPROVER_APP: okblog-web
-    BLOG_TITLE: ${{ env.WEB_BLOG_TITLE }}
+    BLOG_TITLE: ${{ vars.WEB_BLOG_TITLE }}
 
 on:
   push:
@@ -30,9 +30,9 @@ jobs:
             cd ./web
 
             echo "NODE_ENV=production" > .env
-            echo "BLOG_TITLE=${{ env.WEB_BLOG_TITLE }}" >> .env
-            echo "BLOG_DESCRIPTION=${{ env.WEB_BLOG_DESCRIPTION }}" >> .env
-            echo "API_URL=${{ env.WEB_API_URL }}" >> .env
+            echo "BLOG_TITLE=${{ vars.WEB_BLOG_TITLE }}" >> .env
+            echo "BLOG_DESCRIPTION=${{ vars.WEB_BLOG_DESCRIPTION }}" >> .env
+            echo "API_URL=${{ vars.WEB_API_URL }}" >> .env
             pwd
             ls -la
             cat .env
