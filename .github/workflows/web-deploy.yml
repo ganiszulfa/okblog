@@ -26,8 +26,14 @@ jobs:
         - name: Build and Push Release 
           shell: bash
           run: |
-            cp ./build_and_push.sh ./web/
             cd ./web
+
+            echo "NODE_ENV=production" > .env
+            echo "BLOG_TITLE=${{ env.WEB_BLOG_TITLE }}" >> .env
+            echo "BLOG_DESCRIPTION=${{ env.WEB_BLOG_DESCRIPTION }}" >> .env
+            echo "API_URL=${{ env.WEB_API_URL }}" >> .env
+
+            cp ../build_and_push.sh ./
             ./build_and_push.sh
           
         - name: Deploy App to CapRover
