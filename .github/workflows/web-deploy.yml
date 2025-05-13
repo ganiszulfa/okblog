@@ -3,7 +3,6 @@ name: Deploy Web Service
 env:
     CONTEXT_DIR: './'
     CAPROVER_APP: okblog-web
-    BLOG_TITLE: ${{ vars.WEB_BLOG_TITLE }}
 
 on:
   push:
@@ -33,12 +32,8 @@ jobs:
             echo "BLOG_TITLE=${{ vars.WEB_BLOG_TITLE }}" >> .env
             echo "BLOG_DESCRIPTION=${{ vars.WEB_BLOG_DESCRIPTION }}" >> .env
             echo "API_URL=${{ vars.WEB_API_URL }}" >> .env
-            pwd
-            ls -la
-            cat .env
 
             cp ../build_and_push.sh ./
-
             ./build_and_push.sh
           
         - name: Deploy App to CapRover
