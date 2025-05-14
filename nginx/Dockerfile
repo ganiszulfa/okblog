@@ -2,7 +2,8 @@ FROM nginx:stable-alpine
 
 # Copy nginx configuration files
 COPY ./api-gateway.conf /etc/nginx/nginx.conf
-
+COPY ./cors-preflight.conf /etc/nginx/cors-preflight.conf
+COPY ./common-headers.conf /etc/nginx/common-headers.conf
 # Create cache directory
 RUN mkdir -p /data/nginx/cache
 

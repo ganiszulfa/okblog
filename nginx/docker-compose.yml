@@ -7,6 +7,7 @@ services:
     volumes:
       - ./api-gateway.conf:/etc/nginx/nginx.conf:ro
       - ./cors-preflight.conf:/etc/nginx/cors-preflight.conf:ro
+      - ./common-headers.conf:/etc/nginx/common-headers.conf:ro
       - ./cache:/data/nginx/cache
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost/health"]
