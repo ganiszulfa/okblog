@@ -2,8 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import ReactQuill from 'react-quill';
 import 'quill/dist/quill.snow.css';
 import fileService from '../services/fileService';
-
-const UPLOADED_FILE_HOST = process.env.UPLOADED_FILE_HOST || 'http://localhost:4566/';
+import { UPLOADED_FILE_HOST } from '../config/api';
 
 function PostForm({ onSubmit, isLoading, initialData, isEdit = false }) {
   const [title, setTitle] = useState('');

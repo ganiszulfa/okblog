@@ -28,10 +28,7 @@ jobs:
           run: |
             cd ./admin
 
-            echo "NODE_ENV=production" > .env
-            echo "ADMIN_API_BASE_URL=${{ vars.ADMIN_API_BASE_URL }}" >> .env
-            echo "UPLOADED_FILE_HOST=${{ vars.ADMIN_UPLOADED_FILE_HOST }}" >> .env
-
+            echo "ADDITIONAL_BUILD_ARGS=--build-arg VITE_ADMIN_API_BASE_URL=${{ vars.ADMIN_API_BASE_URL }} --build-arg VITE_UPLOADED_FILE_HOST=${{ vars.ADMIN_UPLOADED_FILE_HOST }}" >> $GITHUB_ENV
             cp ../build_and_push.sh ./
             ./build_and_push.sh
           

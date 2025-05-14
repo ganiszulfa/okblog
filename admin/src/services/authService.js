@@ -1,6 +1,5 @@
 import axios from 'axios';
-
-const API_BASE_URL = process.env.ADMIN_API_BASE_URL || 'http://localhost:80/api';
+import { API_BASE_URL } from '../config/api';
 
 // Create axios instance
 const api = axios.create({

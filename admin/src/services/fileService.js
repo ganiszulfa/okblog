@@ -1,7 +1,6 @@
 import axios from 'axios';
 import authService from './authService';
-
-const API_URL = process.env.ADMIN_API_BASE_URL || 'http://localhost:80/api';
+import { API_BASE_URL } from '../config/api';
 
 /**
  * Service for handling file operations
@@ -23,7 +22,7 @@ const fileService = {
       }
     };
     
-    return axios.post(`${API_URL}/files`, formData, config);
+    return axios.post(`${API_BASE_URL}/files`, formData, config);
   }
 };
 
