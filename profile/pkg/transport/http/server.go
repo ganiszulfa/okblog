@@ -27,8 +27,7 @@ func NewServer(svc service.Service, logger log.Logger) *Server {
 }
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// Apply middleware: CORS first, then logging
-	handler := LoggingMiddleware(s.logger)(CorsMiddleware()(s.router))
+	handler := LoggingMiddleware(s.logger)(s.router)
 	handler.ServeHTTP(w, r)
 }
 
