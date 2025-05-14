@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Elasticsearch configuration
-ES_HOST = os.environ.get('ELASTICSEARCH_HOST', 'http://elasticsearch:9200')
+ES_HOST = os.environ.get('ELASTICSEARCH_HOST', 'http://host.docker.internal:9200')
 SERVICE_NAME = os.environ.get('SERVICE_NAME', 'file-service')
 LOG_LEVEL = os.environ.get('LOG_LEVEL', 'INFO')
 
