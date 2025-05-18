@@ -1,5 +1,4 @@
 from flask import Flask
-from flask_cors import CORS
 import os
 from dotenv import load_dotenv
 
@@ -13,7 +12,6 @@ load_dotenv()
 logger = get_logger(__name__)
 
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "*"}})
 
 # Register blueprints
 app.register_blueprint(file_bp, url_prefix='/api')

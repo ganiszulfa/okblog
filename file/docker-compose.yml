@@ -20,23 +20,6 @@ services:
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
     depends_on:
       - minio
-    entrypoint: >
-      /bin/bash -c "
-        pip install --no-cache-dir -r requirements.txt
-
-        if [ -f /app/scripts/init-minio.sh ]; then
-          echo 'Initializing MinIO...'
-          /app/scripts/init-minio.sh
-        fi
-        /app/scripts/kibana-setup.sh
-        exec gunicorn --bind :$$PORT --workers 1 --threads 2 --timeout 0 --worker-class=gthread app:app
-      "
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/api/files"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 10s
 
   minio:
     image: minio/minio:latest
