@@ -68,11 +68,15 @@
           v-for="page in paginationRange" 
           :key="page" 
           @click="changePage(page)"
-          class="px-4 py-2 rounded border"
+          class="px-4 py-2 rounded border hidden md:block"
           :class="currentPage === page ? 'border-gray-900 bg-gray-900 text-white dark:border-gray-700 dark:bg-gray-700' : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'"
         >
           {{ page }}
         </button>
+        
+        <div class="md:hidden px-4 py-2 text-gray-600 dark:text-gray-400">
+          Page {{ currentPage }} of {{ totalPages }}
+        </div>
         
         <button 
           @click="changePage(currentPage + 1)" 
@@ -146,6 +150,12 @@ const changePage = (page) => {
   
   currentPage.value = page;
   fetchPosts();
+  
+  // Scroll to top
+  window.scrollTo({
+    top: 0,
+    behavior: 'smooth'
+  });
 };
 
 const fetchPosts = async () => {

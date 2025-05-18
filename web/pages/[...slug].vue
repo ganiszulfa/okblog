@@ -37,12 +37,12 @@
       <div v-if="post.profileId" class="border-t border-gray-100 dark:border-gray-800 pt-12 mt-16">
         <div class="flex items-center">
           <div class="mr-6">
-            <div class="w-16 h-16 bg-gray-50 dark:bg-gray-800 rounded-full flex items-center justify-center">
-              <span class="text-2xl text-gray-600 dark:text-gray-300">{{ post.authorName ? post.authorName.charAt(0) : '?' }}</span>
+            <div class="w-16 h-16 bg-gray-50 dark:bg-gray-800 rounded-full flex items-center justify-center overflow-hidden">
+              <img src="/ganis-pp-300x300.jpg" alt="Author" class="w-full h-full object-cover" />
             </div>
           </div>
           <div>
-            <h3 class="text-xl font-serif text-gray-900 dark:text-white">{{ post.authorName || 'Anonymous' }}</h3>
+            <h3 class="text-xl font-serif text-gray-900 dark:text-white">{{ post.authorName || 'Ganis' }}</h3>
             <p class="text-gray-600 dark:text-gray-300 mt-2">{{ post.authorBio || '' }}</p>
           </div>
         </div>
