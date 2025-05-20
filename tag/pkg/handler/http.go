@@ -33,6 +33,9 @@ func InitFiberApp() *fiber.App {
 	return app
 }
 
+// Initialize GetRedisClient to use the database client by default
+var GetRedisClient = database.GetClient
+
 // getPostsByTagHandler handles requests for posts by a specific tag with pagination.
 func getPostsByTagHandler(c *fiber.Ctx) error {
 	tagName := strings.ToLower(strings.TrimSpace(c.Params("tagName")))
@@ -52,7 +55,7 @@ func getPostsByTagHandler(c *fiber.Ctx) error {
 		perPage = config.DefaultPerPage
 	}
 
-	valkeyClient := database.GetClient()
+	valkeyClient := GetRedisClient()
 	setName := config.TagPostsPrefix + tagName
 
 	// Calculate start and stop for ZREVRANGE (0-indexed)

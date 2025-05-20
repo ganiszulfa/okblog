@@ -14,6 +14,23 @@ jobs:
         runs-on: ubuntu-latest
         steps:
         - uses: actions/checkout@v3
+        
+        - name: Set up Go
+          uses: actions/setup-go@v4
+          with:
+            go-version: '1.24'
+        
+        - name: Install dependencies
+          run: |
+            cd ./tag
+            go mod tidy
+        
+        - name: Run tests
+          run: |
+            cd ./tag
+            go build ./... -v
+            go test ./... -v
+        
         - run: |
             echo "FULL_IMAGE_NAME=${{ secrets.DOCKERHUB_USERNAME }}/okblog:${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
 
