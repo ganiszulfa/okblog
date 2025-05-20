@@ -28,8 +28,8 @@ jobs:
         - name: Run tests
           run: |
             cd ./tag
-            go build ./... -v
-            go test ./... -v
+            go build -v ./... 
+            go test -v ./... 
         
         - run: |
             echo "FULL_IMAGE_NAME=${{ secrets.DOCKERHUB_USERNAME }}/okblog:${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
