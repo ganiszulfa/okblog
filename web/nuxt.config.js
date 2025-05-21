@@ -20,6 +20,13 @@ export default defineNuxtConfig({
       ],
       link: [
         { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' }
+      ],
+      script: [
+        {
+          src: process.env.UMAMI_SCRIPT_URL,
+          defer: true,
+          'data-website-id': process.env.UMAMI_WEBSITE_ID
+        }
       ]
     }
   },

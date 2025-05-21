@@ -32,7 +32,7 @@
           </NuxtLink>
         </div>
         <div class="flex justify-between items-center text-sm text-gray-500 dark:text-gray-400">
-          <span>{{ post.viewCount }} views</span>
+          <span>{{ post.viewCount || 0 }} views</span>
           <NuxtLink :to="getPostUrl(post)" class="text-gray-900 dark:text-white hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
             Read more →
           </NuxtLink>
