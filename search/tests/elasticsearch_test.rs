@@ -1,10 +1,10 @@
 use search::{
-    config::Config,
     elasticsearch,
-    models::{Post, SearchRequest, SearchResponse},
+    models::SearchRequest,
 };
 use std::env;
-use elasticsearch::{Elasticsearch, http::transport::Transport};
+// Import the actual Elasticsearch client and Transport from the crate directly
+use ::elasticsearch::{Elasticsearch, http::transport::Transport};
 use wiremock::{MockServer, Mock, ResponseTemplate};
 use wiremock::matchers::{method, path, body_json, header};
 use serde_json::json;
