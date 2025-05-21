@@ -14,6 +14,18 @@ jobs:
         runs-on: ubuntu-latest
         steps:
         - uses: actions/checkout@v3
+        
+        - name: Set up JDK
+          uses: actions/setup-java@v3
+          with:
+            distribution: 'temurin'
+            java-version: '21'
+            
+        - name: Build and test with Maven
+          run: |
+            cd ./post
+            ./mvnw clean test
+            
         - run: |
             echo "FULL_IMAGE_NAME=${{ secrets.DOCKERHUB_USERNAME }}/okblog:${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
 

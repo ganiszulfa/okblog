@@ -95,7 +95,7 @@ POST /api/posts
 
 1. Download Kafka connector https://www.confluent.io/hub/confluentinc/kafka-connect-elasticsearch
 2. Copy inside the lib to debezium container `docker cp .\ debezium:/kafka/connect`
-3. Check if copied correctly  `docker exec -it debezium ls -al connect/`
+3. Check if copied correctly  `docker exec -it debezium ls -al /kafka/connect/`
 4. Restart the container
 
 ### Create the connecor and sink

@@ -168,7 +168,8 @@ public class PostControllerTest {
     void whenGetPostById_thenReturn200AndPost() throws Exception {
         when(postService.getPostById(postId)).thenReturn(singlePostResponse);
 
-        mockMvc.perform(get("/api/posts/{id}", postId))
+        mockMvc.perform(get("/api/posts/{id}", postId)
+                .header("Authorization", TEST_JWT_TOKEN))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.id").value(postId.toString()))
                 .andExpect(jsonPath("$.data.title").value("Test Post"))
