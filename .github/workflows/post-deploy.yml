@@ -20,11 +20,12 @@ jobs:
           with:
             distribution: 'temurin'
             java-version: '21'
+            cache: 'maven'
             
         - name: Build and test with Maven
           run: |
             cd ./post
-            ./mvnw clean test
+            mvn clean test
             
         - run: |
             echo "FULL_IMAGE_NAME=${{ secrets.DOCKERHUB_USERNAME }}/okblog:${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
