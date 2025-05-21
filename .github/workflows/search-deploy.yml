@@ -17,6 +17,30 @@ jobs:
         - run: |
             echo "FULL_IMAGE_NAME=${{ secrets.DOCKERHUB_USERNAME }}/okblog:${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
 
+        - name: Install Rust toolchain
+          uses: actions-rs/toolchain@v1
+          with:
+            toolchain: stable
+            override: true
+
+        - name: Cache Rust dependencies
+          uses: actions/cache@v2
+          with:
+            path: |
+              ~/.cargo/registry
+              ~/.cargo/git
+              search/target
+            key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+            restore-keys: ${{ runner.os }}-cargo-
+
+        - name: Build search service
+          working-directory: ./search
+          run: cargo build --release
+
+        - name: Run tests
+          working-directory: ./search
+          run: cargo test
+
         - name: Log in to Docker Hub
           uses: docker/login-action@v2
           with:
