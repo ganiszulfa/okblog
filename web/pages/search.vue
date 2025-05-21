@@ -1,9 +1,9 @@
 <template>
   <div class="container mx-auto px-4 max-w-3xl">
-    <h1 class="text-5xl font-serif text-gray-900 mb-12 text-center">Search Results</h1>
+    <h1 class="text-5xl font-serif text-gray-900 dark:text-white mb-12 text-center">Search Results</h1>
     
     <div v-if="loading" class="text-center py-12">
-      <p class="text-gray-500">Searching...</p>
+      <p class="text-gray-500 dark:text-gray-400">Searching...</p>
     </div>
     
     <div v-else-if="error" class="text-center py-12">
@@ -11,7 +11,7 @@
     </div>
     
     <div v-else>
-      <p v-if="query" class="text-lg text-gray-600 mb-12 text-center">
+      <p v-if="query" class="text-lg text-gray-600 dark:text-gray-400 mb-12 text-center">
         Showing results for: "{{ query }}"
       </p>
       
@@ -19,15 +19,15 @@
         <article 
           v-for="result in results" 
           :key="result.id" 
-          class="border-b border-gray-100 pb-16 last:border-b-0"
+          class="border-b border-gray-100 dark:border-gray-800 pb-16 last:border-b-0"
         >
-          <h2 class="text-3xl font-serif text-gray-900 mb-4">
-            <NuxtLink :to="getPostUrl(result)" class="hover:text-gray-700 transition-colors">
+          <h2 class="text-3xl font-serif text-gray-900 dark:text-white mb-4">
+            <NuxtLink :to="getPostUrl(result)" class="hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
               {{ result.title }}
             </NuxtLink>
           </h2>
-          <p class="text-lg text-gray-700 mb-6 leading-relaxed">{{ result.excerpt }}</p>
-          <div class="text-sm text-gray-500">
+          <p class="text-lg text-gray-700 dark:text-gray-300 mb-6 leading-relaxed">{{ result.excerpt }}</p>
+          <div class="text-sm text-gray-500 dark:text-gray-400">
             <span v-if="result.created_at">
               {{ new Date(result.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) }}
             </span>
@@ -36,7 +36,7 @@
       </div>
       
       <div v-else class="text-center py-12">
-        <p class="text-gray-500">No results found</p>
+        <p class="text-gray-500 dark:text-gray-400">No results found</p>
       </div>
     </div>
   </div>
