@@ -16,10 +16,6 @@ api_url = "http://localhost:80/api/files"
 jwt_token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJiZmY2ZWU5Ny0zNTA1LTQ5NDYtYTY0MC0xMGE3ZDc2NDI1YjMiLCJ1c2VybmFtZSI6ImdhbmlzIiwiaXNzdWVkQXQiOiIyMDI1LTA1LTEwVDAzOjU1OjA2LjQ2NTE4NTcwM1oiLCJleHBpcmVzQXQiOiIyMDI1LTA1LTI0VDAzOjU1OjA2LjQ2NTE4NTcwM1oifQ.pKcV8sq2MM7qktb7Pe0b2xOP-3W890boyFpO8ov5Y28"
 # Set the source host
 source_host = "http://localhost:4566"
-# Set the invalid hosts (optional)
-invalid_hosts = ["invalid-host.com", 
-                 "invalid-host-2.com",
-                 "invalid-host-3.com"]
 
 # Disable warnings about insecure requests
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -84,22 +80,14 @@ def parse_wp_image_path(url: str):
     match = re.search(wp_path_pattern, path)
     
     if match:
-        year = match.group(1)
-        month = match.group(2)
         original_filename = match.group(3)
-        
-        # Create the new filename format: YYYY-MM-filename.ext
-        modified_filename = f"{year}-{month}-{original_filename}"
-        
-        # Generate custom_id from the path
         custom_id = create_uuid_from_string(path)
-        
-        return original_filename, modified_filename, str(custom_id)
+        return original_filename, str(custom_id)
     
     # If no match, use fallback approach
     filename = os.path.basename(path)
     custom_id = create_uuid_from_string(url)
-    return filename, filename, str(custom_id)
+    return filename, str(custom_id)
 
 
 def main():
@@ -159,21 +147,20 @@ def main():
                     print(f">> Image URL {img_url} already processed, skipping...")
                     continue
 
-                for invalid_host in invalid_hosts:
-                    if invalid_host in img_url:
-                        print(f"Replacing {img_url} with {source_host}")
-                        img_url = img_url.replace(invalid_host, source_host);
-                        print(f"New URL: {img_url}")
-                        break
-                
+                # if the host in img_url is not source_host, change it to source_host
+                # may happen if you migrate wordpress many times before
+                if source_host not in img_url:
+                    print(f"Replacing {img_url} with {source_host}")
+                    invalid_host = img_url.split("/")[2]
+                    img_url = img_url.replace(invalid_host, source_host);
+                    print(f"New URL: {img_url}")
+
                 processed_urls.add(img_url)
                 
-                # Parse the WordPress image URL to get components
-                original_name, filename, custom_id = parse_wp_image_path(img_url)
+                filename, custom_id = parse_wp_image_path(img_url)
                 
                 local_path = f"downloaded_images/{filename}"
                 
-                # Check if the file already exists
                 if os.path.exists(local_path):
                     print(f"Image {filename} already exists locally, skipping download...")
                 else:
@@ -206,7 +193,7 @@ def main():
                     with open(local_path, 'rb') as file_obj:
                         files = {'file': (filename, file_obj, content_type)}
                         data = {
-                            'name': original_name,
+                            'name': filename,
                             'description': f"Imported from WordPress post ID {post_id} - {post_title}",
                             'custom_id': custom_id
                         }

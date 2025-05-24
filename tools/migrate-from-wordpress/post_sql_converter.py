@@ -71,7 +71,7 @@ def process_image_paths(content, files_host, file_bucket):
     content = re.sub(img_pattern, replace_path, content)
     return content
 
-def convert_wp_posts_to_sql(profile_id=None, files_host="http://localhost:4566", file_bucket="file-bucket"):
+def convert_wp_posts_to_sql(profile_id=None, files_host="http://localhost:9000", file_bucket="file-bucket"):
     """Convert WordPress posts from JSON to SQL INSERT statements"""
     # Use provided profile_id or fall back to default
     profile_id_to_use = profile_id or default_profile_id
@@ -146,10 +146,17 @@ def convert_wp_posts_to_sql(profile_id=None, files_host="http://localhost:4566",
         # Generate SQL insert
         post_id = generate_uuid()
         
-        sql = f"""INSERT INTO posts (id, profile_id, type, title, content, created_at, updated_at, is_published, published_at, slug, excerpt, view_count, tags) 
-        VALUES (UUID_TO_BIN('{post_id}'), UUID_TO_BIN('{profile_id_to_use}'), '{post_type}', '{title}', '{content}', '{created_at}', '{updated_at}', {is_published}, {'NULL' if published_at == 'NULL' else f"'{published_at}'"}, '{slug}', NULL, 0, '{tags}');"""
-        
+        sql = f"""INSERT INTO posts (id, profile_id, type, title, content, created_at, updated_at, is_published, published_at, slug, excerpt, view_count) 
+        VALUES (UUID_TO_BIN('{post_id}'), UUID_TO_BIN('{profile_id_to_use}'), '{post_type}', '{title}', '{content}', '{created_at}', '{updated_at}', {is_published}, {'NULL' if published_at == 'NULL' else f"'{published_at}'"}, '{slug}', NULL, 0);"""
         sql_statements.append(sql)
+
+        if tags:
+            tags = tags.split(",")
+            for tag in tags:
+                trimmedTag = tag.strip()
+                sql = f"""INSERT INTO post_tags (post_id, tag) 
+                VALUES ( UUID_TO_BIN('{post_id}'), '{trimmedTag}');"""
+                sql_statements.append(sql)
     
     # Write SQL statements to output file
     with open(output_file, 'w', encoding='utf-8') as f:
