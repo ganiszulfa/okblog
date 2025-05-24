@@ -1,11 +1,11 @@
 services:
-  search:
+  okblog-search:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: okblog-search-service
+    container_name: okblog-search
     environment:
       - ELASTICSEARCH_URL=http://host.docker.internal:9200
       - ELASTICSEARCH_INDEX=post-db.okblog.posts
     ports:
-      - "3003:3001"
+      - "3001:3001"
