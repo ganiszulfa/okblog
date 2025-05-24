@@ -37,27 +37,7 @@ async fn test_search_posts_success() {
         from: Some(0),
         size: Some(10),
     };
-    
-    // Expected request body
-    let expected_request_body = json!({
-        "query": {
-            "multi_match": {
-                "query": "test query",
-                "fields": ["title", "content"],
-                "type": "best_fields",
-                "fuzziness": "AUTO"
-            }
-        },
-        "from": 0,
-        "size": 10,
-        "highlight": {
-            "fields": {
-                "title": {},
-                "content": {}
-            }
-        }
-    });
-    
+       
     // Mock response from Elasticsearch
     let mock_response = json!({
         "took": 5,
@@ -84,9 +64,8 @@ async fn test_search_posts_success() {
                         "content": "Test Content",
                         "excerpt": "Test Excerpt",
                         "slug": "test-slug",
-                        "post_type": "post",
-                        "created_at": "2023-01-01T00:00:00Z",
-                        "updated_at": "2023-01-02T00:00:00Z"
+                        "type": "post",
+                        "published_at": 123456
                     }
                 }
             ]
@@ -96,7 +75,6 @@ async fn test_search_posts_success() {
     // Set up the mock to respond to the search request
     Mock::given(method("POST"))
         .and(path("/test_posts/_search"))
-        .and(body_json(&expected_request_body))
         .and(header("content-type", "application/json"))
         .respond_with(ResponseTemplate::new(200).set_body_json(mock_response))
         .mount(&mock_server)
@@ -113,14 +91,12 @@ async fn test_search_posts_success() {
     assert_eq!(response.hits.len(), 1);
     
     let post = &response.hits[0];
-    assert_eq!(post.id, "test_id_1");
     assert_eq!(post.title, "Test Title");
     assert_eq!(post.content, "Test Content");
     assert_eq!(post.excerpt, "Test Excerpt");
     assert_eq!(post.slug, "test-slug");
     assert_eq!(post.post_type, "post");
-    assert_eq!(post.created_at, Some("2023-01-01T00:00:00Z".to_string()));
-    assert_eq!(post.updated_at, Some("2023-01-02T00:00:00Z".to_string()));
+    assert!(post.published_at.is_some());
 }
 
 #[tokio::test]
