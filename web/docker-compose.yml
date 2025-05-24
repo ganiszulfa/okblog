@@ -3,7 +3,7 @@ services:
   # Development configuration with hot-reload
   web:
     image: node:20-alpine
-    container_name: okblog-web-dev
+    container_name: okblog-web
     working_dir: /app
     volumes:
       - .:/app

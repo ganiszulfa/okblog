@@ -1,7 +1,7 @@
 services:
-  postgres:
+  okblog-postgres:
     image: postgres:14
-    container_name: profile-postgres
+    container_name: okblog-postgres
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
@@ -19,13 +19,13 @@ services:
     networks:
       - default
 
-  profile-service:
+  okblog-profile:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: profile-service
+    container_name: okblog-profile
     environment:
-      DB_HOST: postgres
+      DB_HOST: okblog-postgres
       DB_PORT: 5432
       DB_USER: postgres
       DB_PASSWORD: postgres
@@ -35,27 +35,27 @@ services:
       JWT_SIGNING_KEY: ${JWT_SIGNING_KEY:-my_secret_key}
       USE_KIBANA_LOGGING: "true"
       ELASTICSEARCH_URL: "http://host.docker.internal:9200"
-      ELASTICSEARCH_INDEX: "profile-service-logs"
-      SERVICE_NAME: "profile-service"
-      ONLY_ONE_PROFILE: "true"
+      ELASTICSEARCH_INDEX: "okblog-profile-logs"
+      SERVICE_NAME: "okblog-profile"
+      ONLY_ONE_PROFILE: "false"
     ports:
       - "8080:8080"
     depends_on:
-      postgres:
+      okblog-postgres:
         condition: service_healthy
     networks:
       - default
 
   pgadmin:
     image: dpage/pgadmin4:latest
-    container_name: profile-pgadmin
+    container_name: pgadmin
     environment:
       PGADMIN_DEFAULT_EMAIL: admin@admin.com
       PGADMIN_DEFAULT_PASSWORD: admin
     ports:
       - "5050:80"
     depends_on:
-      - postgres
+      - okblog-postgres
     networks:
       - default
 

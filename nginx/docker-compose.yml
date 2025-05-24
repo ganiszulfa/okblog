@@ -1,7 +1,7 @@
 services:
-  nginx:
+  okblog-nginx:
     image: nginx:stable-alpine
-    container_name: api-gateway
+    container_name: okblog-nginx
     ports:
       - "80:80"
     volumes:

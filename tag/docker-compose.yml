@@ -1,27 +1,27 @@
 services:
-  tag-service:
+  okblog-tag:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: tag-service
+    container_name: okblog-tag
     ports:
       - "3002:3002"
     environment:
-      - VALKEY_ADDR=valkey:6379
+      - VALKEY_ADDR=okblog-valkey:6379
       - KAFKA_BROKERS=host.docker.internal:9092
       - KAFKA_TOPIC=post-db.okblog.posts
       - FIBER_PORT=3002
       - MYSQL_HOST=host.docker.internal
       - MYSQL_PORT=3306
       - MYSQL_USER=root
-      - MYSQL_PASSWORD=password
+      - MYSQL_PASSWORD=root
       - MYSQL_DBNAME=okblog
     depends_on:
-      - valkey
+      - okblog-valkey
 
-  valkey:
+  okblog-valkey:
     image: valkey/valkey:7.2-alpine
-    container_name: valkey-cache
+    container_name: okblog-valkey
     ports:
       - "6379:6379"
     volumes:

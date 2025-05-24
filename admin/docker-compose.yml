@@ -1,11 +1,11 @@
 services:
-  admin:
+  okblog-admin:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: okblog-admin
     ports:
-      - "3001:80"
+      - "3006:80"
     volumes:
       - ./:/app
       - /app/node_modules

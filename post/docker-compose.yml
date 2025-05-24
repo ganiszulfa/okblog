@@ -1,11 +1,11 @@
 services:
-  app:
+  okblog-post:
     build: .
-    container_name: post-service
+    container_name: okblog-post
     ports:
       - "8081:8081"
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:mysql://post-db:3306/okblog?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      - SPRING_DATASOURCE_URL=jdbc:mysql://okblog-mysql:3306/okblog?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
       - SPRING_DATASOURCE_USERNAME=root
       - SPRING_DATASOURCE_PASSWORD=root
       # Kibana logging configuration
@@ -14,13 +14,13 @@ services:
       - ELASTICSEARCH_INDEX=post-service-logs
       - SERVICE_NAME=post-service
     depends_on:
-      - db
+      - okblog-mysql
     networks:
       - okblog-network
 
-  db:
+  okblog-mysql:
     image: mysql:8.1
-    container_name: post-db
+    container_name: okblog-mysql
     volumes:
       - mysql_data:/var/lib/mysql
     environment:
@@ -34,53 +34,53 @@ services:
 
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
-    container_name: post-phpmyadmin
+    container_name: phpmyadmin
     environment:
-      - PMA_HOST=post-db
+      - PMA_HOST=okblog-mysql
       - PMA_PORT=3306
       - MYSQL_ROOT_PASSWORD=root
     ports:
       - "8082:80"
     depends_on:
-      - db
+      - okblog-mysql
     networks:
       - okblog-network
 
-  zookeeper:
+  okblog-zookeeper:
     image: debezium/zookeeper:2.7.3.Final
-    container_name: zookeeper
+    container_name: okblog-zookeeper
     ports:
       - "2181:2181"
     networks:
       - okblog-network
 
-  kafka:
+  okblog-kafka:
     image: debezium/kafka:2.7.3.Final
-    container_name: kafka
+    container_name: okblog-kafka
     ports:
       - "9092:9092"
     environment:
-      - ZOOKEEPER_CONNECT=zookeeper:2181
+      - ZOOKEEPER_CONNECT=okblog-zookeeper:2181
       - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://host.docker.internal:9092
     depends_on:
-      - zookeeper
+      - okblog-zookeeper
     networks:
       - okblog-network
 
-  debezium:
+  okblog-debezium:
     image: debezium/connect:2.7.3.Final
-    container_name: debezium
+    container_name: okblog-debezium
     ports:
       - "8083:8083"
     environment:
-      - BOOTSTRAP_SERVERS=kafka:9092
+      - BOOTSTRAP_SERVERS=okblog-kafka:9092
       - GROUP_ID=debezium-connect
       - CONFIG_STORAGE_TOPIC=my_connect_configs
       - OFFSET_STORAGE_TOPIC=my_connect_offsets
       - STATUS_STORAGE_TOPIC=my_connect_statuses
     depends_on:
-      - kafka
-      - db
+      - okblog-kafka
+      - okblog-mysql
     networks:
       - okblog-network
 
@@ -91,11 +91,11 @@ services:
       - "8086:8080"
     environment:
       - KAFKA_CLUSTERS_0_NAME=local
-      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:9092
-      - KAFKA_CLUSTERS_0_ZOOKEEPER=zookeeper:2181
+      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=okblog-kafka:9092
+      - KAFKA_CLUSTERS_0_ZOOKEEPER=okblog-zookeeper:2181
     depends_on:
-      - kafka
-      - zookeeper
+      - okblog-kafka
+      - okblog-zookeeper
     networks:
       - okblog-network
 
