@@ -1,72 +1,74 @@
-# OkBlog Microservices
+# OKBlog
 
-A microservices-based blog application with services for profiles, posts, search, and a central logging system.
+Welcome to OKBlog, where "OK" stands for "Over Kill"!
+
+Why use a simple WordPress installation when you can create an army of microservices?
+
+Is it necessary? Absolutely not.   
+Is it fun? Maybe?  
+Is it educational? I hope so!  
+
+When someone asks why you built a distributed system for a blog that gets twelve visitors a month, just say: "Because it's not alright, it's OKBlog!"
 
 ## Architecture
 
 The application consists of the following components:
 
-- **Profile Service** (Go): Manages user profiles and authentication
-- **Post Service** (Java/Spring Boot): Manages blog posts and comments
-- **Search Service**: Handles search functionality across the platform
-- **File Service**: Manages file uploads and storage
-- **Tag Service**: Handles post categorization and tagging
-- **Web Service**: Frontend application for users
-- **Admin Service**: Administrative interface for content management
+- **Profile Service** (Go/go-kit): Manages user profiles with PostgreSQL database
+- **Post Service** (Java/Spring Boot): Handles blog posts and comments with Kafka integration
+- **Search Service** (Rust): Provides search functionality across the platform
+- **File Service** (Python/Flask): Manages file uploads and storage using MinIO
+- **Tag Service** (Go): Handles post categorization and tagging
+- **Web Service** (Vue.js/Nuxt): Frontend application with SSR for better SEO
+- **Admin Service** (React): Administrative interface for content management
 - **Nginx**: Web server and API gateway
 - **Elasticsearch & Kibana**: Centralized logging infrastructure
 
 ## Getting Started
 
-### Prerequisites
+### Prerequisites for development (optional)
 
-- Docker and Docker Compose
-- Go 1.21+ (for development)
-- Java 17+ (for development)
-- Maven (for development)
+- Go 1.21+ (for profile and tag service development)
+- Java 17+ (for post service development)
+- Python 3.10+ (for file service development) 
+- Rust (for search service development)
 - Node.js 18+ (for web and admin services development)
 
 ### Running the Application
 
-1. First, start the central services (Elasticsearch and Kibana):
+1. You need docker, docker compose, and python.
+
+2. If you want, you can go to each folder and start the services, but I've prepared a running script to start all the services.
 
 ```bash
-docker-compose up -d
+python ./tools/docker-container-manage/run-docker.py
 ```
 
-2. Then, start the individual services:
+3. Connect Debezium to MySQL and ElasticSearch.
 
 ```bash
-# Start the Profile service
-cd profile
-docker-compose up -d
+python ./tools/init/init_debezium.py
+```
 
-# Start the Post service
-cd post
-docker-compose up -d
+4. Create Kibana Dataviews, which later can be accessed at http://localhost:5601
 
-# Start the Search service
-cd search
-docker-compose up -d
+```bash
+python ./tools/init/init_kibana.py
+```
 
-# Start the File service
-cd file
-docker-compose up -d
+5. (Optional) Create a user and posts.
 
-# Start the Tag service
-cd tag
-docker-compose up -d
-
-# Start the Web service
-cd web
-docker-compose up -d
-
-# Start the Admin service
-cd admin
-docker-compose up -d
+```bash
+python ./tools/init/init_user_and_posts.py
 ```
 
 ### Accessing Services
+
+#### Public API
+
+All requests are through the API Gateway, which can be accessed at http://localhost:80, while admin is accessed at http://localhost:3001
+
+#### Internal API
 
 - **Profile Service API**: http://localhost:8080
 - **Post Service API**: http://localhost:8081
@@ -74,15 +76,6 @@ docker-compose up -d
 - **File Service API**: http://localhost:8083
 - **Tag Service API**: http://localhost:8084
 - **Web Application**: http://localhost:3000
-- **Admin Interface**: http://localhost:3001
-- **Kibana Dashboard**: http://localhost:5601
-
-### Viewing Logs in Kibana
-
-1. Access Kibana at http://localhost:5601
-2. Navigate to Management > Stack Management > Kibana > Data Views
-3. Create a new Data View with the pattern `*-logs*`
-4. Go to Analytics > Discover to view the logs
 
 ## Development
 
@@ -95,10 +88,6 @@ Each service can be developed independently:
 - **Tag Service**: See [tag/README.md](tag/README.md) for details
 - **Web Service**: See [web/README.md](web/README.md) for details
 - **Admin Service**: See [admin/README.md](admin/README.md) for details
-
-## Deployment
-
-For production deployment, consider using Kubernetes. Configuration files will be added in the future.
 
 ## CI/CD Workflows
 
@@ -116,8 +105,10 @@ The project uses GitHub Actions for continuous deployment of each microservice. 
 
 ### How the Workflows Work
 
-Each workflow follows these steps:
-1. Checks out the repository code
+At the moment, deployment is using Caprover, and each workflow follows these steps:
+
+1. Checks out the repository code 
+1. Build and run the tests
 2. Sets up Docker Buildx for multi-platform builds
 3. Logs in to DockerHub using repository secrets
 4. Extracts the version from the tag name
@@ -129,13 +120,9 @@ Each workflow follows these steps:
 To deploy a service, create and push a tag with the appropriate prefix:
 
 ```bash
-# Example: Deploy admin service version 1.2.3
-git tag admin-1.2.3
-git push origin admin-1.2.3
-
-# Example: Deploy file service version 2.0.1
-git tag file-2.0.1
-git push origin file-2.0.1
+# Example: Deploy admin service version 1-2
+git tag admin-1-2
+git push origin admin-1-2
 ```
 
 ### Required Secrets
