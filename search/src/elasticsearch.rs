@@ -40,14 +40,44 @@ pub async fn search_posts(
     let from = request.from.unwrap_or(0);
     let size = request.size.unwrap_or(10);
     
-    // Build the search query
+    // Build the search query with flexible order, partial matching, and filtering by is_published
     let query_body = json!({
         "query": {
-            "multi_match": {
-                "query": query,
-                "fields": fields,
-                "type": "best_fields",
-                "fuzziness": "AUTO"
+            "bool": {
+                "must": [
+                    {
+                        "bool": {
+                            "should": [
+                                // Match complete words in any order
+                                {
+                                    "match": {
+                                        "content": {
+                                            "query": query,
+                                            "operator": "and",
+                                            "fuzziness": "AUTO"
+                                        }
+                                    }
+                                },
+                                // Match partial words with wildcard
+                                {
+                                    "query_string": {
+                                        "fields": ["content", "title"],
+                                        "query": format!("*{}*", query.split_whitespace().collect::<Vec<&str>>().join("* *")),
+                                        "analyze_wildcard": true
+                                    }
+                                }
+                            ],
+                            "minimum_should_match": 1
+                        }
+                    }
+                ],
+                "filter": [
+                    {
+                        "term": {
+                            "is_published": true
+                        }
+                    }
+                ]
             }
         },
         "from": from,
@@ -83,14 +113,12 @@ pub async fn search_posts(
             let id = hit["_id"].as_str().unwrap_or("").to_string();
             
             Post {
-                id,
                 title: source["title"].as_str().unwrap_or("").to_string(),
                 content: source["content"].as_str().unwrap_or("").to_string(),
                 excerpt: source["excerpt"].as_str().unwrap_or("").to_string(),
                 slug: source["slug"].as_str().unwrap_or("").to_string(),
                 post_type: source["post_type"].as_str().unwrap_or("").to_string(),
                 created_at: source["created_at"].as_str().map(|s| s.to_string()),
-                updated_at: source["updated_at"].as_str().map(|s| s.to_string()),
             }
         })
         .collect();
