@@ -7,6 +7,7 @@ use elasticsearch::{
 };
 use serde_json::{json, Value};
 use tracing::{info, error};
+use chrono::{DateTime, NaiveDateTime, Utc};
 
 pub async fn create_client() -> Result<Elasticsearch> {
     let config = Config::from_env();
@@ -110,15 +111,25 @@ pub async fn search_posts(
         .iter()
         .map(|hit| {
             let source = &hit["_source"];
-            let id = hit["_id"].as_str().unwrap_or("").to_string();
             
             Post {
                 title: source["title"].as_str().unwrap_or("").to_string(),
                 content: source["content"].as_str().unwrap_or("").to_string(),
                 excerpt: source["excerpt"].as_str().unwrap_or("").to_string(),
                 slug: source["slug"].as_str().unwrap_or("").to_string(),
-                post_type: source["post_type"].as_str().unwrap_or("").to_string(),
-                created_at: source["created_at"].as_str().map(|s| s.to_string()),
+                post_type: source["type"].as_str().unwrap_or("").to_string(),
+                published_at: source["published_at"].as_i64().map(|micros| {
+                    // Convert microseconds to seconds and nanoseconds
+                    let secs = micros / 1_000_000;
+                    let nsecs = ((micros % 1_000_000) * 1_000) as u32;
+                    
+                    // Create DateTime from timestamp
+                    let naive = NaiveDateTime::from_timestamp_opt(secs, nsecs).unwrap_or_default();
+                    let datetime: DateTime<Utc> = DateTime::from_naive_utc_and_offset(naive, Utc);
+                    
+                    // Format to ISO 8601 / RFC 3339 format
+                    datetime.format("%Y-%m-%dT%H:%M:%S.%f").to_string()
+                }).or_else(|| source["published_at"].as_str().map(|s| s.to_string())),
             }
         })
         .collect();

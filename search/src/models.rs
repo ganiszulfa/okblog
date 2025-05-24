@@ -2,14 +2,12 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Post {
-    pub id: String,
     pub title: String,
     pub post_type: String,
     pub content: String,
     pub excerpt: String,
     pub slug: String,
-    pub created_at: Option<String>,
-    pub updated_at: Option<String>,
+    pub published_at: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
