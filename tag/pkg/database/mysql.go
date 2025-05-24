@@ -3,9 +3,10 @@ package database
 import (
 	"database/sql"
 	"fmt"
-	"log"
 	"os"
 	"time"
+
+	"okblog/tag/pkg/logger"
 
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -19,30 +20,30 @@ func InitMySQLDB() error {
 	mysqlHost := os.Getenv("MYSQL_HOST")
 	if mysqlHost == "" {
 		mysqlHost = "localhost"
-		log.Printf("MYSQL_HOST not set, using default: %s", mysqlHost)
+		logger.Info("MYSQL_HOST not set, using default", map[string]string{"host": mysqlHost})
 	}
 
 	mysqlPort := os.Getenv("MYSQL_PORT")
 	if mysqlPort == "" {
 		mysqlPort = "3306"
-		log.Printf("MYSQL_PORT not set, using default: %s", mysqlPort)
+		logger.Info("MYSQL_PORT not set, using default", map[string]string{"port": mysqlPort})
 	}
 
 	mysqlUser := os.Getenv("MYSQL_USER")
 	if mysqlUser == "" {
 		mysqlUser = "root"
-		log.Printf("MYSQL_USER not set, using default: %s", mysqlUser)
+		logger.Info("MYSQL_USER not set, using default", map[string]string{"user": mysqlUser})
 	}
 
 	mysqlPassword := os.Getenv("MYSQL_PASSWORD")
 	if mysqlPassword == "" {
-		log.Printf("MYSQL_PASSWORD not set, using empty password")
+		logger.Warn("MYSQL_PASSWORD not set, using empty password", nil)
 	}
 
 	mysqlDBName := os.Getenv("MYSQL_DBNAME")
 	if mysqlDBName == "" {
 		mysqlDBName = "okblog"
-		log.Printf("MYSQL_DBNAME not set, using default: %s", mysqlDBName)
+		logger.Info("MYSQL_DBNAME not set, using default", map[string]string{"dbname": mysqlDBName})
 	}
 
 	// Format: username:password@tcp(host:port)/dbname
@@ -52,7 +53,7 @@ func InitMySQLDB() error {
 	var err error
 	mysqlDB, err = sql.Open("mysql", dsn)
 	if err != nil {
-		log.Printf("Failed to open MySQL connection: %v", err)
+		logger.Error("Failed to open MySQL connection", err)
 		return err
 	}
 
@@ -63,18 +64,18 @@ func InitMySQLDB() error {
 
 	// Test the connection
 	if err := mysqlDB.Ping(); err != nil {
-		log.Printf("Failed to ping MySQL: %v", err)
+		logger.Error("Failed to ping MySQL", err)
 		return err
 	}
 
-	log.Println("Successfully connected to MySQL database")
+	logger.Info("Successfully connected to MySQL database", nil)
 	return nil
 }
 
 // GetMySQLDB returns the MySQL database connection
 func GetMySQLDB() *sql.DB {
 	if mysqlDB == nil {
-		log.Fatal("MySQL connection not initialized. Call InitMySQLDB first.")
+		logger.Fatal("MySQL connection not initialized. Call InitMySQLDB first.", nil)
 	}
 	return mysqlDB
 }

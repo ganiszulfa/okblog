@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -9,19 +8,24 @@ import (
 	"okblog/tag/pkg/consumer"
 	"okblog/tag/pkg/database"
 	"okblog/tag/pkg/handler"
+	"okblog/tag/pkg/logger"
 )
 
 // Post struct is now defined in models.go
 
 func main() {
+	// Initialize logger
+	logger.Initialize()
+	logger.Info("Starting tag service", nil)
+
 	// Initialize Valkey client
 	if err := database.InitValkeyClient(); err != nil {
-		log.Fatalf("Failed to initialize Valkey client: %v", err)
+		logger.Fatal("Failed to initialize Valkey client", err)
 	}
 
 	// Initialize MySQL database connection
 	if err := database.InitMySQLDB(); err != nil {
-		log.Fatalf("Failed to initialize MySQL database: %v", err)
+		logger.Fatal("Failed to initialize MySQL database", err)
 	}
 	defer database.CloseMySQLDB()
 
@@ -42,6 +46,6 @@ func main() {
 	signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
 	<-sigchan // Block until a signal is received
 
-	log.Println("Shutdown signal received, exiting...")
+	logger.Info("Shutdown signal received, exiting...", nil)
 	// Any additional cleanup logic could be added here
 }

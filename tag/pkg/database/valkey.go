@@ -2,9 +2,10 @@ package database
 
 import (
 	"context"
-	"log"
 	"os"
 	"time"
+
+	"okblog/tag/pkg/logger"
 
 	"github.com/redis/go-redis/v9"
 )
@@ -19,7 +20,7 @@ func InitValkeyClient() error {
 	valkeyAddr := os.Getenv("VALKEY_ADDR")
 	if valkeyAddr == "" {
 		valkeyAddr = "localhost:6379" // Default Valkey address
-		log.Printf("VALKEY_ADDR not set, using default: %s", valkeyAddr)
+		logger.Info("VALKEY_ADDR not set, using default", map[string]string{"addr": valkeyAddr})
 	}
 
 	opts := &redis.Options{
@@ -32,10 +33,10 @@ func InitValkeyClient() error {
 	defer cancel()
 
 	if _, err := clientInstance.Ping(ctx).Result(); err != nil {
-		log.Printf("Could not connect to Valkey: %v", err)
+		logger.Error("Could not connect to Valkey", err)
 		return err
 	}
-	log.Println("Successfully connected to Valkey")
+	logger.Info("Successfully connected to Valkey", nil)
 	return nil
 }
 
@@ -43,7 +44,7 @@ func InitValkeyClient() error {
 // It's assumed InitValkeyClient has been called successfully before this.
 func GetClient() *redis.Client {
 	if clientInstance == nil {
-		log.Fatal("Valkey client not initialized. Call InitValkeyClient first.")
+		logger.Fatal("Valkey client not initialized. Call InitValkeyClient first.", nil)
 	}
 	return clientInstance
 }

@@ -16,6 +16,8 @@ services:
       - MYSQL_USER=root
       - MYSQL_PASSWORD=root
       - MYSQL_DBNAME=okblog
+      - ELASTICSEARCH_URL=http://host.docker.internal:9200
+      - ELASTICSEARCH_INDEX_PREFIX=okblog-tag-logs
     depends_on:
       - okblog-valkey
 

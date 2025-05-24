@@ -13,6 +13,7 @@ tag/
 │   ├── consumer/             # Kafka consumers for processing events
 │   ├── database/             # Database/cache client implementations (Valkey)
 │   ├── handler/              # HTTP API handlers and routes
+│   ├── logger/               # Logging implementation with Elasticsearch support
 │   └── models/               # Data models and structures
 ├── Dockerfile                # Containerization configuration
 ├── docker-compose.yml        # Local development setup
@@ -48,6 +49,13 @@ Contains Kafka consumers for processing:
 - Post events (creation, updates)
 - Tag relationship events
 
+### Logger
+
+Provides structured logging with optional Elasticsearch integration:
+- JSON-formatted logs to stdout
+- Sends logs to Elasticsearch when configured
+- Different log levels (DEBUG, INFO, WARN, ERROR, FATAL)
+
 ### Handler
 
 Contains HTTP handlers for the exposed API endpoints:
@@ -72,6 +80,8 @@ docker-compose up
 - `KAFKA_BROKERS` - Comma-separated list of Kafka brokers (required)
 - `VALKEY_ADDR` - Valkey server address (default: localhost:6379)
 - `FIBER_PORT` - HTTP server port (default: 3001)
+- `ELASTICSEARCH_URL` - Elasticsearch URL (e.g., http://elasticsearch:9200), if not set, Elasticsearch logging is disabled
+- `ELASTICSEARCH_INDEX_PREFIX` - Prefix for Elasticsearch indices (default: tag-service)
 
 ## Deployment
 
