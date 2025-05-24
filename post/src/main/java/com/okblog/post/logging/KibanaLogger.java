@@ -19,6 +19,8 @@ import org.springframework.stereotype.Component;
 import jakarta.annotation.PostConstruct;
 import java.io.IOException;
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -35,7 +37,7 @@ public class KibanaLogger {
     @Value("${logging.kibana.elasticsearch-url:http://localhost:9200}")
     private String elasticsearchUrl;
 
-    @Value("${logging.kibana.index-name:post-service-logs}")
+    @Value("${logging.kibana.index-name:okblog-post-logs}")
     private String indexName;
 
     @Value("${logging.kibana.service-name:post-service}")
@@ -121,8 +123,9 @@ public class KibanaLogger {
         // Send to Elasticsearch asynchronously
         CompletableFuture.runAsync(() -> {
             try {
+                String indexNameWithDate = indexName + "-" + DateTimeFormatter.ofPattern("yyyy.MM.dd").format(LocalDateTime.now());
                 IndexRequest<LogEntry> request = IndexRequest.of(i -> 
-                    i.index(indexName)
+                    i.index(indexNameWithDate)
                      .id(UUID.randomUUID().toString())
                      .document(logEntry)
                 );

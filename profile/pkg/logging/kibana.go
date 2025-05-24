@@ -143,8 +143,9 @@ func (l *KibanaLogger) Log(keyvals ...interface{}) error {
 		docID := uuid.New().String()
 
 		// Index the document
+		indexNameWithDate := l.indexName + "-" + time.Now().UTC().Format("2006.01.02")
 		res, err := l.esClient.Index(
-			l.indexName,
+			indexNameWithDate,
 			bytes.NewReader(data),
 			l.esClient.Index.WithDocumentID(docID),
 			l.esClient.Index.WithContext(context.Background()),

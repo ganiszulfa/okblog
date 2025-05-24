@@ -11,8 +11,8 @@ services:
       # Kibana logging configuration
       - KIBANA_LOGGING_ENABLED=true
       - ELASTICSEARCH_URL=http://host.docker.internal:9200
-      - ELASTICSEARCH_INDEX=post-service-logs
-      - SERVICE_NAME=post-service
+      - ELASTICSEARCH_INDEX=okblog-post-logs
+      - SERVICE_NAME=okblog-post
     depends_on:
       - okblog-mysql
     networks:

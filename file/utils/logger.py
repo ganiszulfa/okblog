@@ -12,7 +12,7 @@ load_dotenv()
 
 # Elasticsearch configuration
 ES_HOST = os.environ.get('ELASTICSEARCH_HOST', 'http://host.docker.internal:9200')
-SERVICE_NAME = os.environ.get('SERVICE_NAME', 'file-service')
+SERVICE_NAME = os.environ.get('SERVICE_NAME', 'okblog-file')
 LOG_LEVEL = os.environ.get('LOG_LEVEL', 'INFO')
 
 # Create Elasticsearch client
@@ -43,7 +43,7 @@ class ElasticsearchLogHandler(logging.Handler):
                 log_entry = json.loads(log_entry)
             
             # Add additional metadata
-            log_entry['@timestamp'] = datetime.datetime.utcnow().isoformat()
+            log_entry['@timestamp'] = datetime.datetime.now(datetime.UTC).isoformat()
             log_entry['host'] = self.hostname
             log_entry['service'] = SERVICE_NAME
             
@@ -82,7 +82,7 @@ def get_logger(name):
     # Add Elasticsearch handler if client is available
     if es_client is not None:
         # Use a daily index pattern
-        index_name = f"{SERVICE_NAME}-logs-{datetime.datetime.utcnow().strftime('%Y.%m.%d')}"
+        index_name = f"{SERVICE_NAME}-logs-{datetime.datetime.now(datetime.UTC).strftime('%Y.%m.%d')}"
         es_handler = ElasticsearchLogHandler(es_client, index_name)
         es_handler.setLevel(level)
         es_formatter = CustomJsonFormatter('%(asctime)s %(name)s %(levelname)s %(message)s %(pathname)s %(lineno)d')
