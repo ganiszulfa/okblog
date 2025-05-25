@@ -1,8 +1,17 @@
 <template>
   <div class="container mx-auto px-4 max-w-4xl">
     
+    <!-- Debug info (remove in production) -->
+    <div v-if="error" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+      <strong>Error:</strong> {{ error }}
+    </div>
+    
+    <div v-if="pending" class="text-center py-12">
+      <p class="text-gray-500 dark:text-gray-400">Loading posts...</p>
+    </div>
+    
     <!-- Post listing -->
-    <div v-if="posts.length > 0" class="space-y-16">
+    <div v-else-if="posts.length > 0" class="space-y-16">
       <article 
         v-for="post in posts" 
         :key="post.id" 
@@ -18,8 +27,8 @@
             {{ new Date(post.publishedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) }}
           </span>
         </div>
-        <p class="text-lg text-gray-700 dark:text-gray-300 mb-6 leading-relaxed">{{ post.summary }}</p>
-        <div class="flex flex-wrap gap-2 mb-6">
+        <p v-if="post.excerpt" class="text-lg text-gray-700 dark:text-gray-300 mb-6 leading-relaxed">{{ post.excerpt }}</p>
+        <div class="flex flex-wrap gap-2 mb-6" v-if="post.tags && post.tags.length > 0">
           <NuxtLink 
             v-for="(tag, index) in post.tags" 
             :key="index" 
@@ -30,7 +39,7 @@
           </NuxtLink>
         </div>
         <div class="flex justify-between items-center text-sm text-gray-500 dark:text-gray-400">
-          <span>{{ post.viewCount }} views</span>
+          <span>{{ post.viewCount || 0 }} views</span>
           <NuxtLink :to="getPostUrl(post)" class="text-gray-900 dark:text-white hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
             Read more →
           </NuxtLink>
@@ -39,7 +48,7 @@
     </div>
     
     <div v-else class="text-center py-12">
-      <p class="text-gray-500 dark:text-gray-400">No posts found</p>
+      <p class="text-gray-500 dark:text-gray-400">No posts found!</p>
     </div>
     
     <!-- Pagination -->
@@ -102,26 +111,69 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+console.log('Rendering index page');
+import { ref, computed, watch } from 'vue';
 
 const route = useRoute();
 const router = useRouter();
 const { $api } = useNuxtApp();
 const config = useRuntimeConfig();
 
-const posts = ref([]);
 const currentPage = ref(parseInt(route.query.page) || 1);
-const totalItems = ref(0);
 const perPage = ref(10);
-const totalPages = ref(1);
+
+// Server-side logging that will appear in Docker logs
+if (process.server) {
+  console.log('[SERVER] Index page - fetching posts for page:', currentPage.value);
+}
+
+// Use useFetch for SSR with reactive key
+const { data: postsData, pending, error, refresh } = await useFetch(`${config.public.apiBase}/api/posts/type/POST/published/true?page=${currentPage.value}&per_page=${perPage.value}`, {
+  onRequest({ request, options }) {
+    console.log('Requesting posts request:', request);
+    console.log('Requesting posts options:', options);
+  },
+  onResponse({ response }) {
+    console.log('Response received:', response.status);
+  },
+  onError(error) {
+    console.error('Error fetching posts:', error);
+  }
+})
+
+// Server-side logging of the response
+if (process.server) {
+  console.log('[SERVER] Posts data received:', {
+    hasData: !!postsData.value,
+    dataStructure: postsData.value ? Object.keys(postsData.value) : 'no data',
+    postsCount: postsData.value?.data?.length || 0,
+    error: error.value
+  });
+}
+
+// Watch for route changes to update currentPage
+watch(() => route.query.page, (newPage) => {
+  console.log('Route query page:', newPage);
+  currentPage.value = parseInt(newPage) || 1;
+});
+
+// Computed properties derived from the fetched data
+const posts = computed(() => {
+  console.log('Posts data:', postsData.value);
+  return postsData.value?.data || [];
+});
+const totalItems = computed(() => postsData.value?.pagination?.total_items || 0);
+const totalPages = computed(() => postsData.value?.pagination?.total_pages || 1);
 
 // Helper function to create the URL path with date for a post
 const getPostUrl = (post) => {
+  console.log('Post:', post);
   if (!post) return '/';
   return `/${post.slug}`;
 };
 
 const paginationRange = computed(() => {
+  console.log('Pagination range:', totalPages.value);
   // Show 5 page buttons at most
   const rangeSize = 5;
   const range = [];
@@ -141,7 +193,7 @@ const paginationRange = computed(() => {
   return range;
 });
 
-const changePage = (page) => {
+const changePage = async (page) => {
   if (page < 1 || page > totalPages.value) return;
   
   router.push({
@@ -149,7 +201,9 @@ const changePage = (page) => {
   });
   
   currentPage.value = page;
-  fetchPosts();
+  
+  // Refresh the data with new page
+  await refresh();
   
   // Scroll to top
   window.scrollTo({
@@ -157,31 +211,6 @@ const changePage = (page) => {
     behavior: 'smooth'
   });
 };
-
-const fetchPosts = async () => {
-  try {
-    const response = await $api.posts.getPublishedPosts(currentPage.value, perPage.value);
-    console.log('API Response:', response);
-    posts.value = response.data?.data || [];
-    totalItems.value = response.data?.pagination?.total_items || 0;
-    perPage.value = response.data?.pagination?.per_page || 10;
-    totalPages.value = response.data?.pagination?.total_pages || 1;
-    
-    console.log('Total items:', totalItems.value);
-    console.log('Per page:', perPage.value);
-    console.log('Total pages from API:', totalPages.value);
-  } catch (error) {
-    console.error('Error fetching posts:', error);
-    posts.value = [];
-    totalItems.value = 0;
-    perPage.value = 10;
-    totalPages.value = 1;
-  }
-};
-
-onMounted(() => {
-  fetchPosts();
-});
 
 useHead({
   title: config.public.blogTitle,

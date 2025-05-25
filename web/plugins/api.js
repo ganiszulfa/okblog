@@ -40,7 +40,31 @@ export default defineNuxtPlugin((nuxtApp) => {
      * @param {Number} perPage - Number of items per page
      */
     getPublishedPosts(page = 1, perPage = 10) {
-      return instance.get(`/api/posts/type/POST/published/true?page=${page}&per_page=${perPage}`);
+      const url = `/api/posts/type/POST/published/true?page=${page}&per_page=${perPage}`;
+      console.log('getPublishedPosts', url);
+      if (process.server) {
+        console.log('[SERVER] API Call - getPublishedPosts:', { url, page, perPage });
+      }
+      return instance.get(url).then(response => {
+        if (process.server) {
+          console.log('[SERVER] API Response - getPublishedPosts:', {
+            status: response.status,
+            hasData: !!response.data,
+            dataKeys: response.data ? Object.keys(response.data) : 'no data',
+            postsCount: response.data?.data?.data?.length || 0
+          });
+        }
+        return response;
+      }).catch(error => {
+        if (process.server) {
+          console.error('[SERVER] API Error - getPublishedPosts:', {
+            message: error.message,
+            status: error.response?.status,
+            url: url
+          });
+        }
+        throw error;
+      });
     },
     
     /**

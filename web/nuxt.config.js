@@ -5,6 +5,11 @@ export default defineNuxtConfig({
   
   // Set compatibility date as recommended in the logs
   compatibilityDate: '2024-04-03',
+
+  // Nitro configuration for production
+  nitro: {
+    preset: 'node-server'
+  },
   
   // App configuration (replaces head in Nuxt 2)
   app: {
