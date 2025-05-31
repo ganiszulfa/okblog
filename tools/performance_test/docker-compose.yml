@@ -1,0 +1,28 @@
+version: '3'
+
+services:
+  k6:
+    image: grafana/k6:latest
+    container_name: okblog-k6
+    volumes:
+      - ./:/scripts
+      - ./reports:/reports
+    environment:
+      - BASE_URL=${BASE_URL:-http://okblog-nginx:80}
+      - K6_WEB_DASHBOARD=true
+      - K6_WEB_DASHBOARD_HOST=0.0.0.0
+      - K6_WEB_DASHBOARD_PORT=5665
+      - K6_WEB_DASHBOARD_OPEN=false
+      - K6_WEB_DASHBOARD_EXPORT=/reports/k6-report.html
+      - POST_COUNT=${POST_COUNT:-100}
+      - TAG_COUNT=${TAG_COUNT:-10}
+      - RANDOM_WORD_COUNT=${RANDOM_WORD_COUNT:-10}
+    ports:
+      - "5665:5665"
+    command: run /scripts/script.js
+    networks:
+      - okblog-network
+
+networks:
+  okblog-network:
+    external: true
