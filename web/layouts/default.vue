@@ -89,23 +89,36 @@ import { ref, onMounted, onUnmounted } from 'vue';
 import ThemeToggle from '../components/ThemeToggle.vue';
 
 const isMenuOpen = ref(false);
-const pages = ref([]);
 const config = useRuntimeConfig();
+const apiUrl = computed(() => {
+  const path = `/api/posts/type/PAGE/published/true`; 
+  if (process.server) {
+    return `${config.public.apiBase}${path}`
+  } else {
+    return `${config.public.browserBaseURL}${path}`
+  }
+});
 
-// Fetch published pages for the navigation menu
+const { data: pagesData, pending, error, refresh } = await useFetch(apiUrl, {
+  key: 'pages',
+  server: true,
+  onError({ error }) {
+    console.error('Failed to fetch pages:', error);
+  }
+});
+const pages = computed(() => {
+  return pagesData.value?.data || [];
+});
+
 onMounted(async () => {
   try {
     document.addEventListener('click', handleClickOutside);
-    const { $api } = useNuxtApp();
-    const response = await $api.posts.getPublishedPages();
-    console.log('API response:', response);
-    pages.value = response.data.data || [];
+
   } catch (error) {
     console.error('Failed to fetch pages:', error);
   }
 });
 
-// Close menu when clicking outside
 const handleClickOutside = (event) => {
   if (isMenuOpen.value && !event.target.closest('header')) {
     isMenuOpen.value = false;
