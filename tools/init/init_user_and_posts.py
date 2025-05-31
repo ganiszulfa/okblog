@@ -85,6 +85,9 @@ def main():
     parser.add_argument("--username", default="admin", help="Username for registration")
     parser.add_argument("--email", default="admin@example.com", help="Email for registration")
     parser.add_argument("--password", default="admin", help="Password for registration")
+    parser.add_argument("--post-count", default=100, help="Number of posts to create")
+    parser.add_argument("--tag-count", default=10, help="Number of tags to create")
+    parser.add_argument("--random-word-count", default=10, help="Number of random words to create")
     args = parser.parse_args()
     
     # Register user
@@ -97,18 +100,24 @@ def main():
     if not token:
         print("Login failed, cannot proceed with post creation")
         sys.exit(1)
-    
-    # Create a regular post
-    post_id = create_post(
-        token=token,
-        title="Test Post",
-        content="This is a test post created by the initialization script.",
-        post_type="POST",
-        tags=["test", "post"],
-        slug="test-post-" + str(random.randint(1, 999999)),
-        excerpt="This is a test post."
-    )
-    publish_post(token, post_id)
+
+    post_count = args.post_count
+    tag_count = int(post_count / 10)
+    random_word_count = args.random_word_count
+
+    for i in range(post_count):
+        random_tags = [f"tag{i}" for i in random.sample(range(1, tag_count), 3)]
+        random_words = "random_words_" + str(random.randint(1, random_word_count))
+        post_id = create_post(
+            token=token,
+            title="Test Post " + str(i),
+            content="This is a test post created by the initialization script. " + random_words,
+            post_type="POST",
+            tags=random_tags,
+            slug="test-post-" + str(i),
+            excerpt="This is a test post."
+        )
+        publish_post(token, post_id)
 
     # Create a page
     page_id = create_post(
