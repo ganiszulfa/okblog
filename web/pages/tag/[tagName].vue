@@ -107,15 +107,33 @@ const router = useRouter();
 const config = useRuntimeConfig();
 
 const tagName = computed(() => route.params.tagName);
-const posts = ref([]);
 const currentPage = ref(parseInt(route.query.page) || 1);
 const totalItems = ref(0);
 const perPage = ref(10);
 const totalPages = ref(1);
 const loading = ref(true);
-const error = ref(null);
 
-// Helper function to create the URL path for a post
+const apiUrl = computed(() => {
+  const path = `/api/tag/${tagName.value}?page=${currentPage.value}&per_page=${perPage.value}`;
+  if (process.server) {
+    return `${config.public.apiBase}${path}`
+  } else {
+    return `${config.public.browserBaseURL}${path}`
+  }
+});
+
+const { data: postsData, pending, error, refresh } = await useFetch(apiUrl, {
+  key: `tag-page-${currentPage.value}`
+});
+
+const posts = computed(() => {
+  const data = postsData.value;
+  totalItems.value = data.pagination?.total_items || 0;
+  perPage.value = data.pagination?.per_page || 10;
+  totalPages.value = data.pagination?.total_pages || 1;
+  return data.data || [];
+});
+
 const getPostUrl = (post) => {
   if (!post) return '/';
   return `/${post.slug}`;
@@ -156,35 +174,16 @@ const changePage = (page) => {
 const fetchPosts = async () => {
   loading.value = true;
   error.value = null;
-  
-  try {
-    const response = await fetch(`/api/tag/${tagName.value}?page=${currentPage.value}&per_page=${perPage.value}`);
-    
-    if (!response.ok) {
-      throw new Error(`Failed to fetch posts: ${response.statusText}`);
-    }
-    
-    const data = await response.json();
-    
-    posts.value = data.data || [];
-    totalItems.value = data.pagination?.total_items || 0;
-    perPage.value = data.pagination?.per_page || 10;
-    totalPages.value = data.pagination?.total_pages || 1;
-  } catch (err) {
-    console.error('Error fetching tagged posts:', err);
-    error.value = err.message || 'Failed to load posts';
-    posts.value = [];
-    totalItems.value = 0;
-    perPage.value = 10;
-    totalPages.value = 1;
-  } finally {
-    loading.value = false;
-  }
+
+  await refresh();
+
+  window.scrollTo({
+    top: 0,
+    behavior: 'smooth'
+  });
+
 };
 
-onMounted(() => {
-  fetchPosts();
-});
 
 // Refetch when tag name changes
 watch(() => route.params.tagName, () => {
