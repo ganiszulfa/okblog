@@ -32,6 +32,7 @@ jobs:
             echo "BLOG_TITLE=${{ vars.WEB_BLOG_TITLE }}" >> .env
             echo "BLOG_DESCRIPTION=${{ vars.WEB_BLOG_DESCRIPTION }}" >> .env
             echo "API_URL=${{ vars.WEB_API_URL }}" >> .env
+            echo "BROWSER_BASE_URL=${{ vars.WEB_BROWSER_BASE_URL }}" >> .env
             echo "UMAMI_SCRIPT_URL=${{ vars.WEB_UMAMI_SCRIPT_URL }}" >> .env
             echo "UMAMI_WEBSITE_ID=${{ vars.WEB_UMAMI_WEBSITE_ID }}" >> .env
 
