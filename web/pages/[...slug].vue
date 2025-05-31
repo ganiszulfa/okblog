@@ -62,6 +62,7 @@
 import { ref, onMounted } from 'vue';
 const config = useRuntimeConfig();
 const route = useRoute();
+const { $api } = useNuxtApp();
 
 const loading = ref(true);
 const pathSegments = route.params.slug;
@@ -95,6 +96,12 @@ const formatDate = (dateString) => {
     day: 'numeric'
   }).format(date);
 };
+
+onMounted(() => {
+  if (post.value) {
+    $api.posts.incrementViewCount(post.value.id);
+  }
+});
 
 // Meta tags for the page
 useHead(() => ({
