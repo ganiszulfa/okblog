@@ -116,72 +116,43 @@ import { ref, computed, watch } from 'vue';
 
 const route = useRoute();
 const router = useRouter();
-const { $api } = useNuxtApp();
 const config = useRuntimeConfig();
 
 const currentPage = ref(parseInt(route.query.page) || 1);
 const perPage = ref(10);
 
-// Server-side logging that will appear in Docker logs
-if (process.server) {
-  console.log('[SERVER] Index page - fetching posts for page:', currentPage.value);
-}
-
-// Use useFetch for SSR with reactive key
-const { data: postsData, pending, error, refresh } = await useFetch(`${config.public.apiBase}/api/posts/type/POST/published/true?page=${currentPage.value}&per_page=${perPage.value}`, {
-  onRequest({ request, options }) {
-    console.log('Requesting posts request:', request);
-    console.log('Requesting posts options:', options);
-  },
-  onResponse({ response }) {
-    console.log('Response received:', response.status);
-  },
-  onError(error) {
-    console.error('Error fetching posts:', error);
+const apiUrl = computed(() => {
+  const path = `/api/posts/type/POST/published/true?page=${currentPage.value}&per_page=${perPage.value}`; 
+  if (process.server) {
+    return `${config.public.apiBase}${path}`
+  } else {
+    return `${config.public.browserBaseURL}${path}`
   }
-})
+});
 
-// Server-side logging of the response
-if (process.server) {
-  console.log('[SERVER] Posts data received:', {
-    hasData: !!postsData.value,
-    dataStructure: postsData.value ? Object.keys(postsData.value) : 'no data',
-    postsCount: postsData.value?.data?.length || 0,
-    error: error.value
-  });
-}
-
-// Watch for route changes to update currentPage
-watch(() => route.query.page, (newPage) => {
-  console.log('Route query page:', newPage);
-  currentPage.value = parseInt(newPage) || 1;
+const { data: postsData, pending, error, refresh } = await useFetch(apiUrl, {
+  key: `posts-page-${currentPage.value}`
 });
 
 // Computed properties derived from the fetched data
 const posts = computed(() => {
-  console.log('Posts data:', postsData.value);
   return postsData.value?.data || [];
 });
-const totalItems = computed(() => postsData.value?.pagination?.total_items || 0);
 const totalPages = computed(() => postsData.value?.pagination?.total_pages || 1);
 
 // Helper function to create the URL path with date for a post
 const getPostUrl = (post) => {
-  console.log('Post:', post);
   if (!post) return '/';
   return `/${post.slug}`;
 };
 
 const paginationRange = computed(() => {
-  console.log('Pagination range:', totalPages.value);
-  // Show 5 page buttons at most
   const rangeSize = 5;
   const range = [];
   
   let start = Math.max(1, currentPage.value - Math.floor(rangeSize / 2));
   let end = Math.min(totalPages.value, start + rangeSize - 1);
   
-  // Adjust if we're at the end
   if (end === totalPages.value) {
     start = Math.max(1, end - rangeSize + 1);
   }
@@ -196,16 +167,14 @@ const paginationRange = computed(() => {
 const changePage = async (page) => {
   if (page < 1 || page > totalPages.value) return;
   
-  router.push({
+  await router.push({
     query: { ...route.query, page: page === 1 ? undefined : page }
   });
   
   currentPage.value = page;
   
-  // Refresh the data with new page
   await refresh();
-  
-  // Scroll to top
+
   window.scrollTo({
     top: 0,
     behavior: 'smooth'

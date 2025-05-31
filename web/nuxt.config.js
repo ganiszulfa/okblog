@@ -45,6 +45,7 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       apiBase: process.env.API_URL || 'http://localhost:8080',
+      browserBaseURL: process.env.BROWSER_BASE_URL || process.env.API_URL || 'http://localhost:8080',
       blogTitle: process.env.BLOG_TITLE || 'OKBlog',
       blogDescription: process.env.BLOG_DESCRIPTION || 'A simple blog built with Nuxt.js'
     }
