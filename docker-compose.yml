@@ -1,5 +1,5 @@
 services:
-  elasticsearch:
+  okblog-elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.12.1
     container_name: okblog-elasticsearch
     environment:
@@ -18,22 +18,22 @@ services:
       timeout: 10s
       retries: 5
 
-  kibana:
+  okblog-kibana:
     image: docker.elastic.co/kibana/kibana:8.12.1
     container_name: okblog-kibana
     environment:
-      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - ELASTICSEARCH_HOSTS=http://okblog-elasticsearch:9200
     ports:
       - "5601:5601"
     depends_on:
-      elasticsearch:
+      okblog-elasticsearch:
         condition: service_healthy
     networks:
       - okblog-network
 
 networks:
   okblog-network:
-    driver: bridge
+    external: true
 
 volumes:
   elasticsearch_data: 

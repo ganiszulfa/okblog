@@ -13,3 +13,9 @@ services:
       - NODE_ENV=production
       - ADMIN_API_BASE_URL=http://localhost:80/api
       - UPLOADED_FILE_HOST=http://localhost:4566/
+    networks:
+      - okblog-network
+
+networks:
+  okblog-network:
+    external: true

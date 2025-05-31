@@ -11,7 +11,7 @@ logger = get_logger(__name__)
 class FileService:
     def __init__(self):
         self.bucket_name = os.environ.get('S3_BUCKET_NAME', 'file-bucket')
-        self.endpoint_url = os.environ.get('S3_ENDPOINT_URL', 'http://host.docker.internal:9000')
+        self.endpoint_url = os.environ.get('S3_ENDPOINT_URL', 'http://okblog-minio:9000')
         
         logger.info(f"Initializing FileService with bucket: {self.bucket_name}, endpoint: {self.endpoint_url}")
         

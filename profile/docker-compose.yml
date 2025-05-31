@@ -17,7 +17,7 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - default
+      - okblog-network
 
   okblog-profile:
     build:
@@ -34,7 +34,7 @@ services:
       PORT: 8080
       JWT_SIGNING_KEY: ${JWT_SIGNING_KEY:-my_secret_key}
       USE_KIBANA_LOGGING: "true"
-      ELASTICSEARCH_URL: "http://host.docker.internal:9200"
+      ELASTICSEARCH_URL: "http://okblog-elasticsearch:9200"
       ELASTICSEARCH_INDEX: "okblog-profile-logs"
       SERVICE_NAME: "okblog-profile"
       ONLY_ONE_PROFILE: "false"
@@ -44,7 +44,7 @@ services:
       okblog-postgres:
         condition: service_healthy
     networks:
-      - default
+      - okblog-network
 
   pgadmin:
     image: dpage/pgadmin4:latest
@@ -57,10 +57,11 @@ services:
     depends_on:
       - okblog-postgres
     networks:
-      - default
+      - okblog-network
 
 volumes:
   postgres_data:
 
 networks:
-  default:
+  okblog-network:
+    external: true

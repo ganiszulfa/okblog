@@ -10,7 +10,7 @@ services:
       - SPRING_DATASOURCE_PASSWORD=root
       # Kibana logging configuration
       - KIBANA_LOGGING_ENABLED=true
-      - ELASTICSEARCH_URL=http://host.docker.internal:9200
+      - ELASTICSEARCH_URL=http://okblog-elasticsearch:9200
       - ELASTICSEARCH_INDEX=okblog-post-logs
       - SERVICE_NAME=okblog-post
     depends_on:
@@ -61,7 +61,7 @@ services:
       - "9092:9092"
     environment:
       - ZOOKEEPER_CONNECT=okblog-zookeeper:2181
-      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://host.docker.internal:9092
+      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://okblog-kafka:9092
     depends_on:
       - okblog-zookeeper
     networks:
@@ -101,7 +101,7 @@ services:
 
 networks:
   okblog-network:
-    driver: bridge
+    external: true
 
 volumes:
   mysql_data: 

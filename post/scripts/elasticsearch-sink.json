@@ -4,7 +4,7 @@
     "connector.class": "io.confluent.connect.elasticsearch.ElasticsearchSinkConnector",
     "tasks.max": "1",
     "topics": "post-db.okblog.posts",
-    "connection.url": "http://host.docker.internal:9200",
+    "connection.url": "http://okblog-elasticsearch:9200",
     "type.name": "_doc",
     "key.ignore": "false",
     "key.converter": "org.apache.kafka.connect.storage.StringConverter",

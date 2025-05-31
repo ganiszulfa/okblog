@@ -11,7 +11,8 @@ services:
       - NODE_ENV=production
       - HOST=0.0.0.0
       - PORT=3000
-      - API_URL=http://localhost:80
+      - API_URL=http://okblog-nginx:80
+      - BROWSER_BASE_URL=http://localhost:80
       - BLOG_TITLE=OKBlog - Development
       - BLOG_DESCRIPTION=A modern blog for sharing your thoughts and ideas with the world
       - NITRO_LOG_LEVEL=info
@@ -22,8 +23,12 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
-    # Keep container running and restart on failure
-    restart: unless-stopped
     # Enable TTY for better log output
     tty: true
     stdin_open: true
+    networks:
+      - okblog-network
+
+networks:
+  okblog-network:
+    external: true

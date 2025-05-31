@@ -5,9 +5,15 @@ services:
       dockerfile: Dockerfile
     container_name: okblog-search
     environment:
-      - ELASTICSEARCH_URL=http://host.docker.internal:9200
+      - ELASTICSEARCH_URL=http://okblog-elasticsearch:9200
       - ELASTICSEARCH_INDEX=post-db.okblog.posts
       - ELASTICSEARCH_LOGGING_ENABLED=true
       - ELASTICSEARCH_LOGGING_INDEX=okblog-search-logs
     ports:
       - "3001:3001"
+    networks:
+      - okblog-network
+
+networks:
+  okblog-network:
+    external: true

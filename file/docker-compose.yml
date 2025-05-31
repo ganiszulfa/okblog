@@ -16,11 +16,13 @@ services:
       - AWS_ACCESS_KEY_ID=minioadmin
       - AWS_SECRET_ACCESS_KEY=minioadmin
       - AWS_DEFAULT_REGION=us-east-1
-      - ELASTICSEARCH_HOST=${ELASTICSEARCH_HOST:-http://host.docker.internal:9200}
+      - ELASTICSEARCH_HOST=${ELASTICSEARCH_HOST:-http://okblog-elasticsearch:9200}
       - SERVICE_NAME=okblog-file
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
     depends_on:
       - okblog-minio
+    networks:
+      - okblog-network
 
   okblog-minio:
     image: minio/minio:latest
@@ -39,3 +41,9 @@ services:
       interval: 10s
       timeout: 5s
       retries: 3
+    networks:
+      - okblog-network
+
+networks:
+  okblog-network:
+    external: true
