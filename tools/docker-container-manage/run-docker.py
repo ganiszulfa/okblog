@@ -43,6 +43,9 @@ def main():
 
     print("✅ All services started successfully!")
 
+    print("Creating docker network, ignored if it's error because already exists...")
+    subprocess.run("docker network create okblog-network", shell=True)
+
     time.sleep(5)
     subprocess.run("docker ps -a", shell=True)
 
