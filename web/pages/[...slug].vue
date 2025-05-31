@@ -60,15 +60,30 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
+const config = useRuntimeConfig();
 const route = useRoute();
-const router = useRouter();
-const { $api } = useNuxtApp();
 
 const loading = ref(true);
-const error = ref(null);
-const post = ref(null);
-
 const pathSegments = route.params.slug;
+
+const apiUrl = computed(() => {
+  const path = `/api/posts/slug/${pathSegments[0]}`; 
+  if (process.server) {
+    return `${config.public.apiBase}${path}`
+  } else {
+    return `${config.public.browserBaseURL}${path}`
+  }
+});
+
+const { data: postData, pending, error, refresh } = await useFetch(apiUrl, {
+  key: `posts-page-${pathSegments[0]}`
+});
+
+// Computed properties derived from the fetched data
+const post = computed(() => {
+  loading.value = false;
+  return postData.value?.data || {}
+});
 
 // Format date function
 const formatDate = (dateString) => {
@@ -88,41 +103,6 @@ useHead(() => ({
     { name: 'description', content: post.value ? post.value.summary : 'Post not found' }
   ]
 }));
-
-onMounted(async () => {
-  // If there's only one segment, it's a post or page URL
-  if (Array.isArray(pathSegments) && pathSegments.length === 1) {
-    const slug = pathSegments[0];
-    
-    try {
-      // Fetch the post by slug
-      const response = await $api.posts.getPostBySlug(slug);
-      
-      if (response.data?.data) {
-        post.value = response.data.data;
-        
-        // Increment the view count
-        if (post.value && post.value.id) {
-          try {
-            await $api.posts.incrementViewCount(post.value.id);
-            console.log('View count incremented for post ID:', post.value.id);
-          } catch (e) {
-            console.error('Error incrementing view count:', e);
-          }
-        }
-        
-        loading.value = false;
-        return;
-      }
-    } catch (err) {
-      console.error('Error fetching post:', err);
-    }
-  }
-  
-  // If we get here, the post wasn't found
-  error.value = 'Post not found';
-  loading.value = false;
-});
 </script>
 
 <style>

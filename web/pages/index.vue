@@ -111,8 +111,7 @@
 </template>
 
 <script setup>
-console.log('Rendering index page');
-import { ref, computed, watch } from 'vue';
+import { ref, computed } from 'vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -140,7 +139,6 @@ const posts = computed(() => {
 });
 const totalPages = computed(() => postsData.value?.pagination?.total_pages || 1);
 
-// Helper function to create the URL path with date for a post
 const getPostUrl = (post) => {
   if (!post) return '/';
   return `/${post.slug}`;
