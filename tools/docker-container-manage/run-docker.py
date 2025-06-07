@@ -24,15 +24,15 @@ def main():
 
     # Define the services and their order
     services = [
-        {"name": "root services (Elasticsearch and Kibana)", "cmd": "docker compose -f docker-compose.yml up -d --remove-orphans"},
+        {"name": "root services", "cmd": "docker compose -f docker-compose.yml up -d --remove-orphans"},
         {"name": "web service", "cmd": "docker compose -f web/docker-compose.yml up -d --remove-orphans"},
         {"name": "file service", "cmd": "docker compose -f file/docker-compose.yml up -d --remove-orphans"},
         {"name": "post service", "cmd": "docker compose -f post/docker-compose.yml up -d --remove-orphans"},
         {"name": "admin service", "cmd": "docker compose -f admin/docker-compose.yml up -d --remove-orphans"},
-        {"name": "nginx service", "cmd": "docker compose -f nginx/docker-compose.yml up -d --remove-orphans"},
         {"name": "search service", "cmd": "docker compose -f search/docker-compose.yml up -d --remove-orphans"},
         {"name": "profile service", "cmd": "docker compose -f profile/docker-compose.yml up -d --remove-orphans"},
-        {"name": "tag service", "cmd": "docker compose -f tag/docker-compose.yml up -d --remove-orphans"}
+        {"name": "tag service", "cmd": "docker compose -f tag/docker-compose.yml up -d --remove-orphans"},
+        {"name": "nginx service", "cmd": "docker compose -f nginx/docker-compose.yml up -d --remove-orphans"},
     ]
 
     # Start each service
@@ -46,11 +46,11 @@ def main():
     print("Creating docker network, ignored if it's error because already exists...")
     subprocess.run("docker network create okblog-network", shell=True)
 
-    time.sleep(5)
+    time.sleep(6)
     subprocess.run("docker ps -a", shell=True)
 
     print("Checking connectors...")
-    time.sleep(5)
+    time.sleep(6)
     check_connector()
 
 if __name__ == "__main__":

@@ -42,6 +42,17 @@ jobs:
             cp ./build_and_push.sh ./post/
             cd ./post
             ./build_and_push.sh
+
+        - name: Run Trivy vulnerability scanner
+          uses: aquasecurity/trivy-action@0.28.0
+          with:
+            image-ref: '${{ env.FULL_IMAGE_NAME }}'
+            format: 'table'
+            exit-code: '1'
+            ignore-unfixed: true
+            vuln-type: 'os,library'
+            severity: 'CRITICAL,HIGH'
+          
           
         - name: Deploy App to CapRover
           uses: caprover/deploy-from-github@d76580d79952f6841c453bb3ed37ef452b19752c
