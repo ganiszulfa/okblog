@@ -200,6 +200,45 @@ This will start:
 3. Go to Discover to view the logs
 4. Create visualizations and dashboards as needed 
 
+## Application Monitoring with New Relic
+
+The profile service includes integration with New Relic for application performance monitoring (APM).
+
+### Features
+- Transaction monitoring for all API endpoints
+- HTTP request/response monitoring
+- Error tracking and alerting
+- Performance metrics collection
+- Distributed tracing support
+
+### Configuration
+Set the following environment variables to enable New Relic monitoring:
+
+- `NEW_RELIC_APP_NAME` - The name of your application in New Relic (default: "profile-service")
+- `NEW_RELIC_LICENSE_KEY` - Your New Relic license key (required for monitoring to work)
+
+### Setting Up New Relic
+1. Sign up for a New Relic account at https://newrelic.com/
+2. Obtain your license key from the New Relic dashboard
+3. Add your license key to the environment variables:
+   ```bash
+   export NEW_RELIC_LICENSE_KEY=your_license_key_here
+   ```
+   
+   Or when using Docker Compose:
+   ```bash
+   NEW_RELIC_LICENSE_KEY=your_license_key_here docker-compose up -d
+   ```
+
+4. Start the profile service
+5. Check the New Relic dashboard to see your application metrics
+
+### Viewing Metrics in New Relic
+1. Log in to your New Relic account
+2. Navigate to APM & Services
+3. Find your application (named according to `NEW_RELIC_APP_NAME`)
+4. View transaction traces, error rates, and other performance metrics
+
 ## Deployment
 
 The profile service can be deployed using GitHub Actions and CapRover.

@@ -12,6 +12,7 @@ import (
 	"github.com/ganis/okblog/profile/pkg/service"
 	"github.com/go-kit/kit/endpoint"
 	"github.com/go-kit/log"
+	"github.com/newrelic/go-agent/v3/newrelic"
 )
 
 type Endpoints struct {
@@ -54,6 +55,13 @@ func MakeEndpoints(svc service.Service, logger log.Logger) Endpoints {
 
 func makeRegisterProfileEndpoint(svc service.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		txn := newrelic.FromContext(ctx)
+		var segment *newrelic.Segment
+		if txn != nil {
+			segment = txn.StartSegment("RegisterProfile")
+			defer segment.End()
+		}
+
 		req := request.(model.RegisterProfileRequest)
 		profile, err := svc.RegisterProfile(ctx, req)
 		if err != nil {
@@ -65,6 +73,13 @@ func makeRegisterProfileEndpoint(svc service.Service) endpoint.Endpoint {
 
 func makeLoginEndpoint(svc service.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		txn := newrelic.FromContext(ctx)
+		var segment *newrelic.Segment
+		if txn != nil {
+			segment = txn.StartSegment("Login")
+			defer segment.End()
+		}
+
 		req := request.(model.LoginRequest)
 		loginResponse, err := svc.Login(ctx, req)
 		if err != nil {
@@ -76,6 +91,13 @@ func makeLoginEndpoint(svc service.Service) endpoint.Endpoint {
 
 func makeValidateTokenEndpoint(svc service.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		txn := newrelic.FromContext(ctx)
+		var segment *newrelic.Segment
+		if txn != nil {
+			segment = txn.StartSegment("ValidateToken")
+			defer segment.End()
+		}
+
 		req := request.(model.TokenValidationRequest)
 		claims, err := svc.ValidateToken(ctx, req.Token)
 		if err != nil {
@@ -90,6 +112,13 @@ func makeValidateTokenEndpoint(svc service.Service) endpoint.Endpoint {
 
 func makeGetProfileEndpoint(svc service.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		txn := newrelic.FromContext(ctx)
+		var segment *newrelic.Segment
+		if txn != nil {
+			segment = txn.StartSegment("GetProfile")
+			defer segment.End()
+		}
+
 		id := request.(string)
 		profile, err := svc.GetProfile(ctx, id)
 		if err != nil {
@@ -101,6 +130,13 @@ func makeGetProfileEndpoint(svc service.Service) endpoint.Endpoint {
 
 func makeUpdateProfileEndpoint(svc service.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		txn := newrelic.FromContext(ctx)
+		var segment *newrelic.Segment
+		if txn != nil {
+			segment = txn.StartSegment("UpdateProfile")
+			defer segment.End()
+		}
+
 		req := request.(struct {
 			ID   string                     `json:"id"`
 			Data model.UpdateProfileRequest `json:"data"`
@@ -115,6 +151,13 @@ func makeUpdateProfileEndpoint(svc service.Service) endpoint.Endpoint {
 
 func makeDeleteProfileEndpoint(svc service.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		txn := newrelic.FromContext(ctx)
+		var segment *newrelic.Segment
+		if txn != nil {
+			segment = txn.StartSegment("DeleteProfile")
+			defer segment.End()
+		}
+
 		id := request.(string)
 		err := svc.DeleteProfile(ctx, id)
 		if err != nil {

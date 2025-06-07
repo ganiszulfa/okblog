@@ -72,7 +72,7 @@ func (m *MockService) ValidateToken(ctx context.Context, token string) (*model.T
 func setupMockServer() (*MockService, *Server, *httptest.Server) {
 	mockSvc := new(MockService)
 	logger := log.NewNopLogger()
-	server := NewServer(mockSvc, logger)
+	server := NewServer(mockSvc, logger, nil)
 
 	// Create a test HTTP server
 	testServer := httptest.NewServer(server)

@@ -38,6 +38,8 @@ services:
       ELASTICSEARCH_INDEX: "okblog-profile-logs"
       SERVICE_NAME: "okblog-profile"
       ONLY_ONE_PROFILE: "false"
+      NEW_RELIC_APP_NAME: "okblog-profile"
+      NEW_RELIC_LICENSE_KEY: ${NEW_RELIC_LICENSE_KEY:-ABCD1234}
     ports:
       - "8080:8080"
     depends_on:

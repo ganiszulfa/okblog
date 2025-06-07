@@ -58,8 +58,13 @@ func main() {
 	svc = service.NewService(repo, logger, onlyOneProfile)
 	svc = service.LoggingMiddleware(logger)(svc)
 
+	// Initialize New Relic
+	appName := getEnv("NEW_RELIC_APP_NAME", "okblog-profile")
+	licenseKey := getEnv("NEW_RELIC_LICENSE_KEY", "")
+	newRelicApp := httptransport.InitNewRelic(appName, licenseKey, logger)
+
 	// Create HTTP server with the service
-	server := httptransport.NewServer(svc, logger)
+	server := httptransport.NewServer(svc, logger, newRelicApp)
 
 	// Create a channel to listen for errors coming from the listener.
 	errs := make(chan error, 2)

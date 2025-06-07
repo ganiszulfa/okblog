@@ -8,26 +8,36 @@ import (
 	"github.com/ganis/okblog/profile/pkg/service"
 	"github.com/go-kit/log"
 	"github.com/gorilla/mux"
+	"github.com/newrelic/go-agent/v3/newrelic"
 )
 
 type Server struct {
-	svc    service.Service
-	router *mux.Router
-	logger log.Logger
+	svc      service.Service
+	router   *mux.Router
+	logger   log.Logger
+	newRelic *newrelic.Application
 }
 
-func NewServer(svc service.Service, logger log.Logger) *Server {
+func NewServer(svc service.Service, logger log.Logger, newRelicApp *newrelic.Application) *Server {
 	s := &Server{
-		svc:    svc,
-		router: mux.NewRouter(),
-		logger: logger,
+		svc:      svc,
+		router:   mux.NewRouter(),
+		logger:   logger,
+		newRelic: newRelicApp,
 	}
 	s.routes()
 	return s
 }
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	handler := LoggingMiddleware(s.logger)(s.router)
+	var handler http.Handler = s.router
+
+	handler = LoggingMiddleware(s.logger)(handler)
+
+	if s.newRelic != nil {
+		handler = NewRelicMiddleware(s.newRelic, s.logger)(handler)
+	}
+
 	handler.ServeHTTP(w, r)
 }
 
