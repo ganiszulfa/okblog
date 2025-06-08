@@ -13,6 +13,8 @@ services:
       - ELASTICSEARCH_URL=http://okblog-elasticsearch:9200
       - ELASTICSEARCH_INDEX=okblog-post-logs
       - SERVICE_NAME=okblog-post
+      - NEW_RELIC_LICENSE_KEY=ABCD1234567890
+      - NEW_RELIC_APP_NAME=okblog-post
     depends_on:
       - okblog-mysql
     networks:
