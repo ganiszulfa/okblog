@@ -48,7 +48,7 @@
               <!-- Dynamic Pages -->
               <li v-for="page in pages" :key="page._id">
                 <NuxtLink 
-                  :to="/`${page.slug}`" 
+                  :to="`/${page.slug}`" 
                   class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white text-lg block py-2"
                   @click="isMenuOpen = false"
                 >
