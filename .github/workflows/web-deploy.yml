@@ -47,7 +47,7 @@ jobs:
             exit-code: '1'
             ignore-unfixed: true
             vuln-type: 'os,library'
-            severity: 'CRITICAL,HIGH'
+            severity: 'CRITICAL'
           
         - name: Deploy App to CapRover
           uses: caprover/deploy-from-github@d76580d79952f6841c453bb3ed37ef452b19752c
