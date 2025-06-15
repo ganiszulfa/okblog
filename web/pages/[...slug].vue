@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div v-if="loading" class="text-center py-12">
+    <div v-if="pending" class="text-center py-12">
       <p class="text-gray-500 dark:text-gray-400">Loading post...</p>
     </div>
     <div v-else-if="error" class="text-center py-12">
@@ -59,12 +59,9 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
 const config = useRuntimeConfig();
 const route = useRoute();
-const { $api } = useNuxtApp();
 
-const loading = ref(true);
 const pathSegments = route.params.slug;
 
 const apiUrl = computed(() => {
@@ -80,11 +77,7 @@ const { data: postData, pending, error, refresh } = await useFetch(apiUrl, {
   key: `posts-page-${pathSegments[0]}`
 });
 
-// Computed properties derived from the fetched data
-const post = computed(() => {
-  loading.value = false;
-  return postData.value?.data || {}
-});
+const post = computed(() => postData.value?.data || null);
 
 // Format date function
 const formatDate = (dateString) => {
@@ -97,9 +90,16 @@ const formatDate = (dateString) => {
   }).format(date);
 };
 
-onMounted(() => {
-  if (post.value) {
-    $api.posts.incrementViewCount(post.value.id);
+// Handle view count increment on client-side only
+onMounted(async () => {
+  if (post.value?.id) {
+    try {
+      const { $api } = useNuxtApp();
+      await $api.posts.incrementViewCount(post.value.id);
+    } catch (err) {
+      // Silently handle errors for view count increment
+      console.warn('Failed to increment view count:', err);
+    }
   }
 });
 
