@@ -3,9 +3,6 @@
     <div v-if="pending" class="text-center py-12">
       <p class="text-gray-500 dark:text-gray-400">Loading post...</p>
     </div>
-    <div v-else-if="error" class="text-center py-12">
-      <p class="text-red-500">{{ error }}</p>
-    </div>
     <div v-else-if="post" class="container mx-auto px-4 max-w-3xl">
       <!-- Post Header -->
       <header class="mb-16">
@@ -78,6 +75,25 @@ const { data: postData, pending, error, refresh } = await useFetch(apiUrl, {
 });
 
 const post = computed(() => postData.value?.data || null);
+
+// Handle 404 errors
+if (error.value) {
+  // Check if it's a 404 error or if post data is null/undefined
+  if (error.value.statusCode === 404 || (postData.value && !postData.value.data)) {
+    throw createError({
+      statusCode: 404,
+      statusMessage: 'Post not found'
+    });
+  }
+}
+
+// Also check for successful API response but no post data
+if (!pending.value && !error.value && postData.value && !postData.value.data) {
+  throw createError({
+    statusCode: 404,
+    statusMessage: 'Post not found'
+  });
+}
 
 // Format date function
 const formatDate = (dateString) => {
