@@ -8,7 +8,7 @@
       <header class="mb-16">
         <h1 class="text-5xl font-serif text-gray-900 dark:text-white mb-6">{{ post.title }}</h1>
         
-        <div class="flex items-center text-gray-500 dark:text-gray-400 mb-8">
+        <div v-if="post.type !== 'PAGE'" class="flex items-center text-gray-500 dark:text-gray-400 mb-8">
           <span v-if="post.publishedAt" class="mr-6">
             {{ formatDate(post.publishedAt) }}
           </span>
@@ -82,7 +82,7 @@ if (error.value) {
   if (error.value.statusCode === 404 || (postData.value && !postData.value.data)) {
     throw createError({
       statusCode: 404,
-      statusMessage: 'Post not found'
+      statusMessage: 'Page is not found'
     });
   }
 }
@@ -91,7 +91,7 @@ if (error.value) {
 if (!pending.value && !error.value && postData.value && !postData.value.data) {
   throw createError({
     statusCode: 404,
-    statusMessage: 'Post not found'
+    statusMessage: 'Page is not found'
   });
 }
 
