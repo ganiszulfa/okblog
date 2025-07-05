@@ -160,3 +160,77 @@ func TestGetPostsByTagHandler_NoResults(t *testing.T) {
 	assert.Equal(t, 0, result.Pagination.TotalPages)
 	assert.Equal(t, 0, result.Pagination.TotalItems)
 }
+
+func TestGetPostsByTagHandler_WithSpacesAndMixedCase(t *testing.T) {
+	// Setup
+	mr, cleanup := setupRedis(t)
+	defer cleanup()
+
+	// Create fiber app
+	app := fiber.New()
+	app.Get("/api/tag/:tagName", getPostsByTagHandler)
+
+	// Setup test data - tag with spaces and mixed case
+	originalTag := "Machine Learning"
+	normalizedTag := "machine learning"
+	setName := config.TagPostsPrefix + normalizedTag
+	postID := "post-id-ml"
+	detailsKey := config.PostDetailsPrefix + postID
+
+	now := time.Now()
+	postDetails := models.CachedPostDetails{
+		Title:       "Introduction to Machine Learning",
+		PublishedAt: now.Add(-12 * time.Hour),
+		Tags:        []string{originalTag},
+		Slug:        "intro-to-ml",
+		ViewCount:   150,
+	}
+
+	// Populate Redis with test data using normalized tag name
+	postJSON, err := json.Marshal(postDetails)
+	require.NoError(t, err)
+
+	// Add post to sorted set using normalized tag name
+	mr.ZAdd(setName, float64(now.Unix()), postID)
+	// Set post details
+	mr.Set(detailsKey, string(postJSON))
+
+	// Test various URL encoding scenarios
+	testCases := []struct {
+		name string
+		path string
+	}{
+		{"spaces as plus", "/api/tag/machine+learning"},
+		{"spaces as %20", "/api/tag/machine%20learning"},
+		{"mixed case with %20", "/api/tag/Machine%20Learning"},
+		{"mixed case with plus", "/api/tag/Machine+Learning"},
+		{"uppercase with %20", "/api/tag/MACHINE%20LEARNING"},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			req := httptest.NewRequest("GET", tc.path, nil)
+			resp, err := app.Test(req)
+			require.NoError(t, err)
+
+			// Assertions
+			assert.Equal(t, fiber.StatusOK, resp.StatusCode)
+
+			var result models.PaginatedPostsResponse
+			err = json.NewDecoder(resp.Body).Decode(&result)
+			require.NoError(t, err)
+
+			// Verify response structure
+			assert.Equal(t, 1, len(result.Data))
+			assert.Equal(t, 1, result.Pagination.CurrentPage)
+			assert.Equal(t, 10, result.Pagination.PerPage)
+			assert.Equal(t, 1, result.Pagination.TotalPages)
+			assert.Equal(t, 1, result.Pagination.TotalItems)
+
+			// Verify post data
+			assert.Equal(t, "Introduction to Machine Learning", result.Data[0].Title)
+			assert.Equal(t, "intro-to-ml", result.Data[0].Slug)
+			assert.Equal(t, 150, result.Data[0].ViewCount)
+		})
+	}
+}

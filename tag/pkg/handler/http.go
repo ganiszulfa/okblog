@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"log"
 	"math"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -17,6 +18,15 @@ import (
 	"okblog/tag/pkg/database"
 	"okblog/tag/pkg/models"
 )
+
+// for consistent storage and retrieval
+func normalizeTagName(tagName string) string {
+	decoded, err := url.QueryUnescape(tagName)
+	if err != nil {
+		decoded = tagName
+	}
+	return strings.ToLower(strings.TrimSpace(decoded))
+}
 
 // InitFiberApp initializes the Fiber application and sets up routes.
 func InitFiberApp() *fiber.App {
@@ -38,7 +48,7 @@ var GetRedisClient = database.GetClient
 
 // getPostsByTagHandler handles requests for posts by a specific tag with pagination.
 func getPostsByTagHandler(c *fiber.Ctx) error {
-	tagName := strings.ToLower(strings.TrimSpace(c.Params("tagName")))
+	tagName := normalizeTagName(c.Params("tagName"))
 	if tagName == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Tag name cannot be empty"})
 	}
@@ -180,18 +190,18 @@ func collectTagsHandler(c *fiber.Ctx) error {
 	}
 	defer rows.Close()
 
-	// Collect all tags
-	allTags := make(map[string]bool)
+	// Collect all tags - map normalized tag name to original tag name
+	allTags := make(map[string]string) // normalized -> original
 	for rows.Next() {
-		var tag string
-		if err := rows.Scan(&tag); err != nil {
+		var originalTag string
+		if err := rows.Scan(&originalTag); err != nil {
 			log.Printf("Error scanning tag row: %v", err)
 			continue
 		}
 
-		tag = strings.TrimSpace(tag)
-		if tag != "" {
-			allTags[tag] = true
+		normalizedTag := normalizeTagName(originalTag)
+		if normalizedTag != "" {
+			allTags[normalizedTag] = originalTag
 		}
 	}
 
@@ -202,21 +212,21 @@ func collectTagsHandler(c *fiber.Ctx) error {
 		})
 	}
 
-	// Check which tags need cache creation (up to 4)
-	tagsToProcess := make([]string, 0, 4)
-	for tag := range allTags {
+	// Check which tags need cache creation (up to 10)
+	tagsToProcess := make([]string, 0, 10)
+	for normalizedTag := range allTags {
 		// Check if sorted set exists
-		setName := config.TagPostsPrefix + tag
+		setName := config.TagPostsPrefix + normalizedTag
 		exists, err := valkeyClient.Exists(ctx, setName).Result()
 		if err != nil {
-			log.Printf("Error checking if sorted set exists for tag %s: %v", tag, err)
+			log.Printf("Error checking if sorted set exists for tag %s: %v", normalizedTag, err)
 			continue
 		}
 
 		if exists == 0 {
-			tagsToProcess = append(tagsToProcess, tag)
-			// Break if we have 4 tags to process
-			if len(tagsToProcess) >= 4 {
+			tagsToProcess = append(tagsToProcess, normalizedTag)
+			// Break if we have 10 tags to process
+			if len(tagsToProcess) >= 10 {
 				break
 			}
 		}
@@ -233,7 +243,10 @@ func collectTagsHandler(c *fiber.Ctx) error {
 	responseData := make(map[string]int)
 
 	// Process each tag that needs a cache
-	for _, tag := range tagsToProcess {
+	for _, normalizedTag := range tagsToProcess {
+		// Get the original tag name for database query
+		originalTag := allTags[normalizedTag]
+
 		// Query posts for this tag using a JOIN between posts and post_tags
 		query := "SELECT BIN_TO_UUID(p.id) as id, p.title, p.published_at, p.slug, p.view_count " +
 			"FROM posts p " +
@@ -241,13 +254,13 @@ func collectTagsHandler(c *fiber.Ctx) error {
 			"WHERE p.is_published = TRUE AND pt.tag = ? " +
 			"ORDER BY p.published_at DESC LIMIT 100"
 
-		postRows, err := db.Query(query, tag)
+		postRows, err := db.Query(query, originalTag)
 		if err != nil {
-			log.Printf("Error querying posts for tag %s: %v", tag, err)
+			log.Printf("Error querying posts for tag %s (original: %s): %v", normalizedTag, originalTag, err)
 			continue
 		}
 
-		setName := config.TagPostsPrefix + tag
+		setName := config.TagPostsPrefix + normalizedTag
 		postsAdded := 0
 
 		// Process posts for this tag
@@ -269,7 +282,7 @@ func collectTagsHandler(c *fiber.Ctx) error {
 			postDetails := models.CachedPostDetails{
 				Title:       title,
 				PublishedAt: publishedAt,
-				// Tags:        []string{tag}, // TODO: Add tags to the cache
+				// Tags:        []string{normalizedTag}, // TODO: Add tags to the cache
 				Slug:      slug,
 				ViewCount: viewCount,
 			}
@@ -301,7 +314,7 @@ func collectTagsHandler(c *fiber.Ctx) error {
 		postRows.Close()
 
 		// Record the number of posts added for this tag
-		responseData[tag] = postsAdded
+		responseData[normalizedTag] = postsAdded
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
